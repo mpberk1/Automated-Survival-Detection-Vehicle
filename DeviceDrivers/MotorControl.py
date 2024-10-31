@@ -12,6 +12,18 @@ REVERSE_M2 = 128
 # Serial setup
 ser = serial.Serial('/dev/serial0', 38400, timeout=1)  # Open the serial port
 
+def moveforwards():
+    ser.write(bytes([FULL_FORWARD_M1]))
+    ser.write(bytes([FULL_FORWARD_M2]))
+
+def moveBackwards():
+    ser.write(bytes([REVERSE_M1]))
+    ser.write(bytes([REVERSE_M2]))
+
+def stop():
+    ser.write(bytes([STOP_M1]))
+    ser.write(bytes([STOP_M2]))
+
 def motor_control():
     try:
         while True:
