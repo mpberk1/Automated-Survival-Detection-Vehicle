@@ -24,6 +24,14 @@ def stop():
     ser.write(bytes([STOP_M1]))
     ser.write(bytes([STOP_M2]))
 
+def leftTurn():
+    ser.write(bytes([FULL_FORWARD_M1]))
+    ser.write(bytes([REVERSE_M2]))
+
+def rightTurn():
+    ser.write(bytes([FULL_FORWARD_M2]))
+    ser.write(bytes([REVERSE_M1]))
+
 def motor_control():
     try:
         while True:
