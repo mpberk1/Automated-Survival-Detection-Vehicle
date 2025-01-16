@@ -21,3 +21,6 @@ def mainFrame():
     mainFrame = Toplevel(root)
 
 loginButton.config(command = mainFrame)
+
+
+root.mainloop()
