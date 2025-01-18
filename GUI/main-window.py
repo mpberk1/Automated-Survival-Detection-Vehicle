@@ -5,9 +5,11 @@ from tkinter import ttk
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from PIL import Image, ImageTk
+from tkinter import filedialog
 
 import random
 import cv2
+import csv
 
 #update clock info
 def updateclock():
@@ -19,21 +21,21 @@ def updateclock():
 
 #agv map simulation
 def trackingMap():
-    canvas.delete("all")
+    mapCanvas.delete("all")
     
     #for grid lines
     for i in range(0, 500, 50):
-        canvas.create_line(i, 0, i, 500, fill="gray")
-        canvas.create_line(0, i, 500, i, fill="gray")
+        mapCanvas.create_line(i, 0, i, 500, fill="gray")
+        mapCanvas.create_line(0, i, 500, i, fill="gray")
     
     #simulate the agv current pos
-    canvas.create_oval(240, 240, 260, 260, fill="white", outline="blue", width=2, tags="AGV")
-    canvas.create_text(250, 270, text="AGV", fill="white", font=("Helvetica", 10, "bold"))
+    mapCanvas.create_oval(240, 240, 260, 260, fill="white", outline="blue", width=2, tags="AGV")
+    mapCanvas.create_text(250, 270, text="AGV", fill="white", font=("Helvetica", 10, "bold"))
 
     #simulate surivior locations
     survivors = [(100, 100), (400, 150), (350, 400)]
     for x, y in survivors:
-        canvas.create_oval(x - 10, y - 10, x + 10, y + 10, fill="red", outline="white", width=2)
+        mapCanvas.create_oval(x - 10, y - 10, x + 10, y + 10, fill="red", outline="white", width=2)
 
     root.after(1000, trackingMap)
 
@@ -138,6 +140,22 @@ def logSensorData():
 
         notificationDetails[shortMessage] = fullMessage
         addNotification(shortMessage)
+
+def exportData():
+    filePath = filedialog.asksaveasfilename(defaultextension='.csv', filetypes=[('CSV files', '*.csv')])
+
+
+    if filePath:
+        with open(filePath, mode='w', newline='') as file:
+            writer = csv.writer(file)
+
+            writer.writerow(['Location', 'Time','Heartbeat', 'Vocal','Body Temp'])
+
+            for row in dataTable.get_children():
+                rowData = dataTable.item(row)['values']
+                writer.writerow(rowData)
+
+        addNotification('Data Exported successfully')
     
 #main window
 root = Tk()
@@ -178,7 +196,7 @@ scrollbar = ttk.Scrollbar(leftFrame, orient=VERTICAL)
 scrollbar.pack(side=RIGHT, fill=Y)
 
 #list of notifications in leftFrame
-notificationList = Listbox(leftFrame, yscrollcommand=scrollbar.set, width=25, height=15, bg='black', fg='white')
+notificationList = Listbox(leftFrame, yscrollcommand=scrollbar.set, width=25, height=15)
 notificationList.pack(side=LEFT, fill=BOTH, expand=True)
 
 scrollbar.config(command=notificationList.yview)
@@ -285,15 +303,17 @@ collectDataButton.grid(row=0, column=2, padx=(10, 0), sticky='e')
 trackingLeftFrame = Frame(trackingTab)
 trackingLeftFrame.grid(row=0, column=0, sticky='nsew', padx=10, pady=10)
 
-cameraLabel = Label(trackingLeftFrame, text='Label', fg='white', bg='black', width=40, height=20)
+cameraLabel = Label(trackingLeftFrame, text='Label', fg='white', bg='black', width=350, height=20)
 cameraLabel.pack(fill='both', expand=True)
 
-mapFrame = Frame(trackingTab, background='black')
+mapFrame = Frame(trackingTab)
 mapFrame.grid(row=0, column=1, sticky='nsew', padx=10, pady=10)
 
-canvas = Canvas(mapFrame, width=500, height=500, bg='black')
-canvas.pack(fill='both', expand=True)
+mapCanvas = Canvas(mapFrame, width=300, height=500, bg='black')
+mapCanvas.pack(fill='both', expand=True)
 
+camera = cv2.VideoCapture(0)
+cameraFeed()
 trackingMap()
 
 #survivor detection tab
@@ -314,6 +334,9 @@ dataTable.column('Time', width=150, anchor='center')
 dataTable.column('Heartbeat', width=100, anchor='center')
 dataTable.column('Vocal', width=100, anchor='center')
 dataTable.column('Body Temp', width=100, anchor='center')
+
+exportButton = ttk.Button(survivorTab, text='Export Data', command = exportData)
+exportButton.pack(pady=10)
 
 def viewNotification(event):
     index = notificationList.curselection()
@@ -340,6 +363,10 @@ updatesTab.rowconfigure(0, weight=1)
 rightFrame.rowconfigure((0,1,2,3, 4), weight=1, uniform='column')
 rightFrame.columnconfigure((0,1), weight=1)
 arrowFrame.columnconfigure((0,1,2), weight=1)
+
+trackingTab.columnconfigure(0, weight=1)
+trackingTab.columnconfigure(1, weight=2)
+trackingTab.rowconfigure(0,weight=1)
 
 bottomFrame.columnconfigure(0, weight=0)
 bottomFrame.columnconfigure(1, weight=1)

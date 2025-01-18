@@ -3,40 +3,21 @@ from tkinter import *
 from tkinter import ttk
 import sqlite3
 import bcrypt
+import sys
+import os
 
-def connectToSQL(dbFile):
-    """ Connect to the SQLite database. """
-    connection = sqlite3.connect(dbFile)
-    return connection
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'DatabaseManager'))
 
-def verifyUser(connection, username, password):
-    """ Verify if the entered username and password are correct. """
-    try:
-        sqlSelectUser = '''SELECT password FROM users WHERE username = ?'''
-        cursor = connection.execute(sqlSelectUser, (username,))
-        row = cursor.fetchone()
-
-        if row:
-            stored_hashed_password = row[0]
-            # Verify the password against the stored hash
-            if bcrypt.checkpw(password.encode('utf-8'), stored_hashed_password):
-                return True
-            else:
-                return False
-        else:
-            return False
-    except sqlite3.Error as e:
-        print(f"Error verifying user: {e}")
-        return False
+from DatabaseManager import create_connection, create_table, verify_user, insert_user
 
 def login():
-    """ Handle login when the button is clicked. """
     username = usernameField.get()
     password = passwordField.get()
     
     if username and password:
-        conn = connectToSQL('users.db')  # Corrected to pass the DB file name
-        if verifyUser(conn, username, password):
+        conn = create_connection('users.db')
+
+        if verify_user(conn, username, password):
             result_label.config(text="Login successful!", foreground="green")
             print("It worked.")
         else:
