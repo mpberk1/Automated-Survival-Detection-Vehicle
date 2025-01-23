@@ -10,6 +10,7 @@ sys.path.append('/home/seed/490/Automated-Survival-Detection-Vehicle/DatabaseMan
 
 # Import the required functions from DatabaseManager.py
 from DatabaseManager import verify_user
+from DatabaseManager import insert_user
 
 # Function to handle the login process
 def login():
@@ -21,6 +22,7 @@ def login():
         db_path = '/home/seed/490/Automated-Survival-Detection-Vehicle/DatabaseManager/users.db'
         try:
             conn = sqlite3.connect(db_path)
+            # insert_user(conn, "Admin", "pass")
             if verify_user(conn, username, password):
                 result_label.config(text="Login successful!", foreground="green")
             else:
