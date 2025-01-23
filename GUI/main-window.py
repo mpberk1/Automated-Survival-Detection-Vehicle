@@ -180,7 +180,7 @@ notebook.add(survivorTab, text='Real-Time Survivor Detection Status')
 
 #clock label
 clockLabel = ttk.Label(root, text='', font=('Helvetica', 18))
-clockLabel.place(x=855, y=10)
+clockLabel.place(x=855, y=0)
 updateclock()
 
 #AGV Status Updates tab
