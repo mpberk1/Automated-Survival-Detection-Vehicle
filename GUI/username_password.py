@@ -1,20 +1,18 @@
 import tkinter as tk
 from tkinter import *
 from tkinter import ttk
+from PIL import Image, ImageTk
 import sqlite3
 import os
-#import main_window
+import subprocess
 
 # Add the path for DatabaseManager.py to the Python search path
 import sys
-sys.path.append('C:/Users/jacka/Documents/ERAU Fall 2024/CS 490/Automated-Survival-Detection-Vehicle/DatabaseManager')
+sys.path.append('/Users/andreagamble/Desktop/Automated-Survival-Detection-Vehicle/DatabaseManager')
 
 # Import the required functions from DatabaseManager.py
 from DatabaseManager import verify_user
 from DatabaseManager import insert_user
-
-def openMainWindow():
-    print()
 
 # Function to handle the login process
 def login():
@@ -23,13 +21,15 @@ def login():
 
     if username and password:
         # Connect to the database
-        db_path = 'C:/Users/jacka/Documents/ERAU Fall 2024/CS 490/Automated-Survival-Detection-Vehicle/DatabaseManager/users.db'
+        db_path = '/Users/andreagamble/Desktop/Automated-Survival-Detection-Vehicle/DatabaseManager/users.db'
         try:
             conn = sqlite3.connect(db_path)
             # insert_user(conn, "Admin", "pass")
             if verify_user(conn, username, password):
                 result_label.config(text="Login successful!", foreground="green")
-                import main_window
+                root
+
+                subprocess.Popen(['python3', '/Users/andreagamble/Desktop/Automated-Survival-Detection-Vehicle/GUI/main_window.py'])
             else:
                 result_label.config(text="Invalid username or password.", foreground="red")
         except sqlite3.Error as e:

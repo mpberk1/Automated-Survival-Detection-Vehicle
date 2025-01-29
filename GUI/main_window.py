@@ -11,6 +11,7 @@ import random
 import cv2
 import csv
 
+
 #update clock info
 def updateclock():
     eastern = ZoneInfo('America/New_York')
@@ -101,6 +102,7 @@ def right():
     print('AGV right movement')
 
 def cameraFeed():
+    global imgTk
     ret, frame = camera.read()
     if ret:
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -372,4 +374,9 @@ bottomFrame.columnconfigure(0, weight=0)
 bottomFrame.columnconfigure(1, weight=1)
 bottomFrame.columnconfigure(2, weight=0)
 
-root.mainloop()
+def main():
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()
+
