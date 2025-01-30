@@ -6,30 +6,32 @@ import sqlite3
 import os
 import subprocess
 
-# Add the path for DatabaseManager.py to the Python search path
 import sys
-sys.path.append('/Users/andreagamble/Desktop/Automated-Survival-Detection-Vehicle/DatabaseManager')
+from pathlib import Path
 
-# Import the required functions from DatabaseManager.py
-from DatabaseManager import verify_user
-from DatabaseManager import insert_user
+#Dynamically get file paths
+current_file = Path(__file__) # Path to this file
+project_root = current_file.parent.parent # Path to Automated-Survival-Detection-Vehicle
+sys.path.insert(0, str(project_root))
 
-# Function to handle the login process
+# functions from DatabaseManager.py
+import DatabaseManager
+from DatabaseManager.DatabaseManager import verify_user, insert_user
+
+# Handle the login process
 def login():
     username = usernameField.get()
     password = passwordField.get()
 
     if username and password:
         # Connect to the database
-        db_path = '/Users/andreagamble/Desktop/Automated-Survival-Detection-Vehicle/DatabaseManager/users.db'
         try:
-            conn = sqlite3.connect(db_path)
+            conn = sqlite3.connect(project_root/"DatabaseManager/users.db")
             # insert_user(conn, "Admin", "pass")
             if verify_user(conn, username, password):
                 result_label.config(text="Login successful!", foreground="green")
                 root
-
-                subprocess.Popen(['python3', '/Users/andreagamble/Desktop/Automated-Survival-Detection-Vehicle/GUI/main_window.py'])
+                subprocess.Popen(['python3', project_root/"GUI/main_window.py"])
             else:
                 result_label.config(text="Invalid username or password.", foreground="red")
         except sqlite3.Error as e:
