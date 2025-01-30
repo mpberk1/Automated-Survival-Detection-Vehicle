@@ -171,7 +171,7 @@ def exportData():
         with open(filePath, mode='w', newline='') as file:
             writer = csv.writer(file)
 
-            writer.writerow(['Location', 'Time','Heartbeat', 'Vocal','Body Temp'])
+            writer.writerow(['Location', 'Time','Heartbeat', 'Vocal','Body Temp °C'])
 
             for row in dataTable.get_children():
                 rowData = dataTable.item(row)['values']
@@ -355,13 +355,13 @@ dataTable.heading('Location', text='Location')
 dataTable.heading('Time', text='Time')
 dataTable.heading('Heartbeat', text='Heartbeat')
 dataTable.heading('Vocal', text='Vocal')
-dataTable.heading('Body Temp', text='Body Temp')
+dataTable.heading('Body Temp °C', text='Body Temp')
 
 dataTable.column('Location', width=200, anchor='center')
 dataTable.column('Time', width=150, anchor='center')
 dataTable.column('Heartbeat', width=100, anchor='center')
 dataTable.column('Vocal', width=100, anchor='center')
-dataTable.column('Body Temp', width=100, anchor='center')
+dataTable.column('Body Temp °C', width=100, anchor='center')
 
 exportButton = ttk.Button(survivorTab, text='Export Data', command = exportData)
 exportButton.pack(pady=10)
