@@ -5,7 +5,9 @@ from tkinter import ttk
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from PIL import Image, ImageTk
+from PIL import ImageOps
 from tkinter import filedialog
+import numpy as np
 
 import random
 import cv2
@@ -112,6 +114,24 @@ def cameraFeed():
         cameraLabel.config(image=imgTk)
     cameraLabel.after(10, cameraFeed)
 
+def readThermalCamera():
+    thermal_data = np.random.random((240,320)) *100
+    return thermal_data
+
+def thermalCameraFeed():
+    global thermalImgTk
+    thermal_data = readThermalCamera()
+
+    # 8-bit image
+    thermal_img = Image.fromarray(thermal_data.astype('uint8'))
+    thermal_img = ImageOps.fit(thermal_img, (425, 250)) 
+    
+    thermalImgTk = ImageTk.PhotoImage(image=thermal_img)
+    thermalCameraLabel.imgTk = thermalImgTk
+    thermalCameraLabel.config(image=thermalImgTk)
+    
+    thermalCameraLabel.after(1000, thermalCameraFeed)
+
 #logging data from sensors
 notificationDetails = {}
 def logSensorData():
@@ -192,7 +212,8 @@ updateclock()
 leftFrame = ttk.Frame(updatesTab)
 leftFrame.grid(row=0, column=0, sticky='nsew', padx=10, pady=10)
 
-updatesTab.columnconfigure(0, weight=0)
+notificationsLabel = ttk.Label(leftFrame, text='Notifications', font=('Helvetica', 14, 'bold'))
+notificationsLabel.pack(pady=(0, 5), anchor='w')
 
 scrollbar = ttk.Scrollbar(leftFrame, orient=VERTICAL)
 scrollbar.pack(side=RIGHT, fill=Y)
@@ -307,6 +328,11 @@ trackingLeftFrame.grid(row=0, column=0, sticky='nsew', padx=10, pady=10)
 
 cameraLabel = Label(trackingLeftFrame, text='Label', fg='white', bg='black', width=350, height=20)
 cameraLabel.pack(fill='both', expand=True)
+
+thermalCameraLabel = Label(trackingLeftFrame, text='Thermal Camera Feed', fg='white', bg='black', width=350, height=20)
+thermalCameraLabel.pack(fill='both', expand=True)
+
+thermalCameraFeed()
 
 mapFrame = Frame(trackingTab)
 mapFrame.grid(row=0, column=1, sticky='nsew', padx=10, pady=10)
