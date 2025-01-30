@@ -97,7 +97,7 @@ def updateBodyTempData():
 def forward():
     print('AGV forward movement')
 def backward():
-    print('AGV bakward movement')
+    print('AGV backward movement')
 def left():
     print('AGV left movement')
 def right():
@@ -256,7 +256,7 @@ updateVocalData()
 bodytempFrame = ttk.Frame(rightFrame)
 bodytempFrame.grid(row=2, column=0, padx=10, pady=10, sticky='ew')
 
-bodytempLabel = ttk.Label(bodytempFrame, text='Body Temp Data')
+bodytempLabel = ttk.Label(bodytempFrame, text='Body Temp °C  ')
 bodytempLabel.grid(row=1, column=0, padx=5, pady=(10,0), sticky='s')
 
 bodytempDataEntry = ttk.Entry(bodytempFrame, width=10)
@@ -348,7 +348,7 @@ trackingMap()
 tableFrame = ttk.Frame(survivorTab)
 tableFrame.pack(fill='both', expand=True, padx=10, pady=10)
 
-dataTable = ttk.Treeview(tableFrame, columns=('Location', 'Time', 'Heartbeat', 'Vocal', 'Body Temp'), show='headings')
+dataTable = ttk.Treeview(tableFrame, columns=('Location', 'Time', 'Heartbeat', 'Vocal', 'Body Temp °C'), show='headings')
 dataTable.pack(fill='both', expand=True)
 
 dataTable.heading('Location', text='Location')
