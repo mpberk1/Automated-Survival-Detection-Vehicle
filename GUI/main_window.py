@@ -7,12 +7,27 @@ from zoneinfo import ZoneInfo
 from PIL import Image, ImageTk
 from PIL import ImageOps
 from tkinter import filedialog
-import numpy as np
+from pathlib import Path
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+import queue
+import sounddevice as sd 
+import random
+import sys
+import subprocess
+import numpy as np
 import random
 import cv2
 import csv
 
+audio_queue = queue.Queue()
+y_data = np.zeros(100)
+
+#Dynamically get file paths
+current_file = Path(__file__) # Path to this file
+project_root = current_file.parent.parent # Path to Automated-Survival-Detection-Vehicle
+sys.path.insert(0, str(project_root))
 
 #update clock info
 def updateclock():
@@ -84,6 +99,15 @@ def updateVocalData():
     vocalDataEntry.insert(0, vocalValue)
 
     root.after(3000, updateVocalData)
+
+# Function to handle vocal button press
+def playVocalSound():
+    try:
+        subprocess.run(['python3', project_root/"Sound/soundDriver.py"], check=True)
+        addNotification("Sound played successfully")
+    except Exception as e:
+        error_message = f"Error playing sound: {str(e)}"
+        addNotification(error_message)
 
 #simulate body temp data
 def updateBodyTempData():
@@ -183,7 +207,8 @@ def exportData():
 root = Tk()
 root.title('AGV-HSD')
 root.geometry('1000x600')
-root.minsize(1000, 600)
+root.minsize(1050, 800)
+root.maxsize(1050, 800)
 root.config(bg='black')
 
 #tabs frame
@@ -202,7 +227,7 @@ notebook.add(survivorTab, text='Real-Time Survivor Detection Status')
 
 #clock label
 clockLabel = ttk.Label(root, text='', font=('Helvetica', 18))
-clockLabel.place(x=855, y=0)
+clockLabel.place(x=1050, y=0)
 updateclock()
 
 #AGV Status Updates tab
@@ -227,10 +252,10 @@ scrollbar.config(command=notificationList.yview)
 #right frame
 #data section
 rightFrame = ttk.Frame(updatesTab)
-rightFrame.grid(row=0, column=1, sticky='nsew', padx=10, pady=10)
+rightFrame.grid(row=0, column=1, sticky='nsew', padx=10, pady=0)
 
 heartbeatFrame = ttk.Frame(rightFrame)
-heartbeatFrame.grid(row=0, column=0, padx=10, pady=10, sticky='ew')
+heartbeatFrame.grid(row=1, column=0, padx=10, pady=10, sticky='ew')
 
 heartbeatLabel = ttk.Label(heartbeatFrame, text='Heartbeat Data')
 heartbeatLabel.grid(row=1, column=0, padx=5, pady=(10,0), sticky='s')
@@ -242,7 +267,7 @@ updateHeartbeatData()
 
 #vocal data
 vocalFrame = ttk.Frame(rightFrame)
-vocalFrame.grid(row=1, column=0, padx=10, pady=10, sticky='ew')
+vocalFrame.grid(row=3, column=0, padx=10, pady=(0,10), sticky='ew')
 
 vocalLabel = ttk.Label(vocalFrame, text='Vocal Response')
 vocalLabel.grid(row=1, column=0, padx=5, pady=(10,0), sticky='s')
@@ -251,6 +276,66 @@ vocalDataEntry = ttk.Entry(vocalFrame, width=10)
 vocalDataEntry.grid(row=2, column=0, padx=10, pady=(0,5), sticky='n')
 
 updateVocalData()
+
+#send vocal response
+vocalButtonFrame = ttk.Frame(rightFrame)
+vocalButtonFrame.grid(row=3, column=0, padx=(100,10), pady=(60,10), sticky='ns')
+
+sendVocalsButton = ttk.Button(vocalButtonFrame, text="Send Vocal Data", command=playVocalSound)
+sendVocalsButton.grid(row=0, column=0, padx=(25,5), pady=(0,10), sticky='n')
+
+#waveform
+waveformFrame = ttk.Frame(rightFrame)
+waveformFrame.grid(row=4, column=0, columnspan=2, padx=10, pady=10, sticky='w')
+
+waveFormLabel = ttk.Label(waveformFrame, text='Vocal Waves')
+waveFormLabel.grid(row=0, column=0, padx=5, pady=5, sticky='w')
+
+fig = Figure(figsize=(3.5, 0.75), dpi=100)
+ax = fig.add_subplot(111)
+ax.set_ylim(-1, 1)
+ax.set_xlim(0, 100)
+ax.set_xticks([])
+ax.set_yticks([])
+line, = ax.plot(np.arange(100), y_data, lw=1, color='black')
+
+canvas = FigureCanvasTkAgg(fig, master=waveformFrame)
+canvas.get_tk_widget().grid(row=1, column=0, padx=5, pady=5, sticky='ew')
+
+def audio_callback(indata, frames, time, status):
+    if status:
+        print(status)
+        addNotification(status)
+    
+    global audio_queue
+    audio_queue.put(np.squeeze(indata))
+    print(f"Audio Data Shape: {indata.shape}")
+
+def updateWaveform():
+    global y_data
+    if not audio_queue.empty():
+        audio_data = audio_queue.get()
+        
+        # Clip or pad data to exactly 100 samples
+        y_data = np.pad(audio_data, (0, max(0, 100 - len(audio_data))), mode='constant')[:100]
+    else:
+        y_data = np.zeros(100)
+    
+    line.set_ydata(y_data)
+    canvas.draw()
+    
+    root.after(50, updateWaveform)
+
+line, = ax.plot(np.arange(100), y_data, lw=1, color='black')
+stream = sd.InputStream(callback=audio_callback, channels=1, samplerate=44100, blocksize=100)
+
+try:
+    stream.start()
+except Exception as e:
+    print(f"Failed to stream audio: {e}")
+
+
+updateWaveform()
 
 #body temp data
 bodytempFrame = ttk.Frame(rightFrame)
@@ -266,7 +351,7 @@ updateBodyTempData()
 
 #agv location data
 locationFrame = ttk.Frame(rightFrame)
-locationFrame.grid(row=3, column=0, padx=10, pady=10, sticky='ew')
+locationFrame.grid(row=0, column=0, padx=10, pady=10, sticky='ew')
 
 locationLabel = ttk.Label(locationFrame, text='AGV Location')
 locationLabel.grid(row=1, column=0, padx=5, pady=(10,0), sticky='s')
@@ -319,8 +404,10 @@ batteryProgressBar.grid(row=0, column=1, padx=(0,10), sticky='w')
 updateBatteryLevel()
 
 #data log button
-collectDataButton = ttk.Button(bottomFrame, text="Log Data", command=logSensorData)
+collectDataButton = tk.Button(bottomFrame, text="Log Data", command=logSensorData)
 collectDataButton.grid(row=0, column=2, padx=(10, 0), sticky='e')
+collectDataButton.config(font=('Arial', 14))
+collectDataButton.grid_configure(ipadx=5, ipady=10)
 
 #agv tracking tab
 trackingLeftFrame = Frame(trackingTab)
@@ -329,7 +416,7 @@ trackingLeftFrame.grid(row=0, column=0, sticky='nsew', padx=10, pady=10)
 cameraLabel = Label(trackingLeftFrame, text='Label', fg='white', bg='black', width=350, height=20)
 cameraLabel.pack(fill='both', expand=True)
 
-thermalCameraLabel = Label(trackingLeftFrame, text='Thermal Camera Feed', fg='white', bg='black', width=350, height=20)
+thermalCameraLabel = Label(trackingLeftFrame, text='Thermal Camera Feed', fg='white', bg='black', width=350, height=50, pady=0)
 thermalCameraLabel.pack(fill='both', expand=True)
 
 thermalCameraFeed()
@@ -387,6 +474,7 @@ notificationList.bind("<Double-1>", viewNotification)
 #for window scaling
 updatesTab.columnconfigure(1, weight=1)
 updatesTab.rowconfigure(0, weight=1)
+
 
 rightFrame.rowconfigure((0,1,2,3, 4), weight=1, uniform='column')
 rightFrame.columnconfigure((0,1), weight=1)
