@@ -103,7 +103,7 @@ def updateVocalData():
 # Function to handle vocal button press
 def playVocalSound():
     try:
-        subprocess.run(['python3', project_root/"Sound/soundDriver.py"], check=True)
+        subprocess.run(['python', project_root/"Sound/soundDriver.py"], check=True)
         addNotification("Sound played successfully")
     except Exception as e:
         error_message = f"Error playing sound: {str(e)}"
@@ -309,7 +309,7 @@ def audio_callback(indata, frames, time, status):
     
     global audio_queue
     audio_queue.put(np.squeeze(indata))
-    print(f"Audio Data Shape: {indata.shape}")
+    # print(f"Audio Data Shape: {indata.shape}")
 
 def updateWaveform():
     global y_data
@@ -371,16 +371,16 @@ movementLabel.grid(row=0, column=1, columnspan=3, padx=0, pady=(10, 0), sticky='
 arrowFrame = ttk.Frame(movementFrame)
 arrowFrame.grid(row=1, column=0, columnspan=3, padx=(35,0), pady=5, sticky='w')
 
-forwardButton = Button(arrowFrame, text='↑', width=3, height=2, command=forward)
+forwardButton = Button(arrowFrame, text='Forward', width=3, height=2, command=forward)
 forwardButton.grid(row=2, column=1, padx=5, pady=(0,5))
 
-backwardButton = Button(arrowFrame, text='↓', width=3, height=2, command=backward)
+backwardButton = Button(arrowFrame, text='Backward', width=3, height=2, command=backward)
 backwardButton.grid(row=4, column=1, padx=5, pady=5)
 
-leftButton = Button(arrowFrame, text='←', width=3, height=2, command=left)
+leftButton = Button(arrowFrame, text='Left', width=3, height=2, command=left)
 leftButton.grid(row=3, column=0, padx=5, pady=5)
 
-rightButton = Button(arrowFrame, text='→', width=3, height=2, command=right)
+rightButton = Button(arrowFrame, text='Right', width=3, height=2, command=right)
 rightButton.grid(row=3, column=2, padx=5, pady=5)
 
 #mechanical arm
