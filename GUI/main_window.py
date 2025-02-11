@@ -10,6 +10,7 @@ from tkinter import filedialog
 from pathlib import Path
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import pithermalcam as ptc
 
 import queue
 import sounddevice as sd 
@@ -139,22 +140,38 @@ def cameraFeed():
     cameraLabel.after(10, cameraFeed)
 
 def readThermalCamera():
-    thermal_data = np.random.random((240,320)) *100
-    return thermal_data
+    # Create thermal camera object if not already created
+    if not hasattr(readThermalCamera, 'thermal_cam'):
+        readThermalCamera.thermal_cam = ptc.PiThermalCam()
+    
+    # Get raw thermal data instead of displaying
+    thermal_array = readThermalCamera.thermal_cam.get_frame()
+    
+    # Normalize the data to 0-255 range for display
+    thermal_normalized = cv2.normalize(thermal_array, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+    
+    # Apply colormap for better visualization
+    thermal_colormap = cv2.applyColorMap(thermal_normalized, cv2.COLORMAP_INFERNO)
+    return thermal_colormap
 
 def thermalCameraFeed():
-    global thermalImgTk
-    thermal_data = readThermalCamera()
-
-    # 8-bit image
-    thermal_img = Image.fromarray(thermal_data.astype('uint8'))
-    thermal_img = ImageOps.fit(thermal_img, (425, 250)) 
-    
-    thermalImgTk = ImageTk.PhotoImage(image=thermal_img)
-    thermalCameraLabel.imgTk = thermalImgTk
-    thermalCameraLabel.config(image=thermalImgTk)
-    
-    thermalCameraLabel.after(1000, thermalCameraFeed)
+    try:
+        thermal_data = readThermalCamera()
+        
+        # Convert OpenCV image to PIL format
+        thermal_img = Image.fromarray(cv2.cvtColor(thermal_data, cv2.COLOR_BGR2RGB))
+        thermal_img = ImageOps.fit(thermal_img, (425, 250))
+        
+        # Create Tkinter-compatible photo image
+        global thermalImgTk
+        thermalImgTk = ImageTk.PhotoImage(image=thermal_img)
+        thermalCameraLabel.configure(image=thermalImgTk)
+        
+        # Schedule next update
+        thermalCameraLabel.after(100, thermalCameraFeed)
+    except Exception as e:
+        print(f"Thermal camera error: {e}")
+        thermalCameraLabel.after(1000, thermalCameraFeed)
 
 #logging data from sensors
 notificationDetails = {}
