@@ -1,4 +1,5 @@
 import socket
+#AGV
 
 # Setup the client to connect to the server
 def p2p_client(server_ip, port=5000):
@@ -20,5 +21,5 @@ def p2p_client(server_ip, port=5000):
         client_socket.close()
 
 if __name__ == "__main__":
-    server_ip = input("Enter server IP address: ")
+    server_ip = '10.33.206.89'
     p2p_client(server_ip)

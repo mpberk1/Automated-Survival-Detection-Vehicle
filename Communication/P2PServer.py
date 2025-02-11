@@ -1,7 +1,8 @@
 import socket
+#GS
 
 # Setup the server to listen for incoming connections
-def p2p_server(host='0.0.0.0', port=5000):
+def p2p_server(host='10.33.147.31', port=5000):
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((host, port))
     server_socket.listen(1)
