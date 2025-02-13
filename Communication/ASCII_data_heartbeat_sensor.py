@@ -82,7 +82,8 @@ def process_sensor_data(data):
         sensor_type = data[2]  # Data type identifier
         print(f"Sensor Type: {sensor_type}")
 
-        if sensor_type == HUMAN_PSE_RADAR or SOMEONE_HERE or NOONE_HERE:
+        # if sensor_type in [HUMAN_PSE_RADAR, SOMEONE_HERE, NOONE_HERE]:
+        if sensor_type == HUMAN_PSE_RADAR:
             presence_info = data[3]
             move_info = data[4]
 
@@ -96,12 +97,14 @@ def process_sensor_data(data):
             if move_info == MOVEMENT:
                     print("🟠 **Person is moving**")
 
-            if sensor_type == FALL_DETECTION:
-                fall_status = data[3]
-                if fall_status == NO_FALL:
-                    print("✅ **No fall detected**")
-                elif fall_status == FALL_DOWN:
-                    print("⚠️ **FALL DETECTED! Immediate attention needed!**")
+        elif sensor_type == FALL_DETECTION:
+            fall_status = data[3]
+            
+            if fall_status == NO_FALL:
+                print("✅ **No fall detected**")
+            
+            elif fall_status == FALL_DOWN:
+                print("⚠️ **FALL DETECTED! Immediate attention needed!**")
         else:
             print(f"❓ Unknown sensor type: {sensor_type}")
 
