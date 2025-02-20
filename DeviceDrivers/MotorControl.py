@@ -1,49 +1,52 @@
-import RPi.GPIO as GPIO
+import serial
 import time
 
-# Assign a single GPIO pin to control both motors
-MOTORS_CTRL = 17  # Change this to the GPIO pin you are using
+# Define motor control bytes (same as Arduino)
+FULL_FORWARD_M1 = 127
+FULL_FORWARD_M2 = 255
+STOP_M1 = 64
+STOP_M2 = 192
+REVERSE_M1 = 1
+REVERSE_M2 = 128
 
-# GPIO setup
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(MOTORS_CTRL, GPIO.OUT)
+# Set up serial communication on the Pi's UART (GPIO14 TX, GPIO15 RX)
+ser = serial.Serial("/dev/serial0", baudrate=38400, timeout=1)
 
-def forward():
-    print("Moving forward")
-    GPIO.output(MOTORS_CTRL, GPIO.HIGH)  # Motors move forward
+def send_command(command):
+    """Send a single byte command to the motor driver."""
+    ser.write(bytes([command]))
+    print(f"Sent command: {command}")
 
-def backward():
-    print("Moving backward")
-    GPIO.output(MOTORS_CTRL, GPIO.LOW)  # Motors move backward
+def move_forward(duration=2):
+    """Move both motors forward for a specified duration."""
+    print("Moving forward...")
+    send_command(FULL_FORWARD_M1)
+    send_command(FULL_FORWARD_M2)
+    time.sleep(duration)
+    stop()
 
 def stop():
-    print("Stopping")
-    GPIO.output(MOTORS_CTRL, GPIO.LOW)  # Stop (assuming LOW stops motion)
+    """Stop both motors."""
+    print("Stopping motors...")
+    send_command(STOP_M1)
+    send_command(STOP_M2)
 
-def motor_control():
-    try:
-        while True:
-            forward()
-            print("Moving forward for 2 seconds")
-            time.sleep(2)
-
-            stop()
-            time.sleep(1)
-
-            backward()
-            print("Moving backward for 2 seconds")
-            time.sleep(2)
-
-            stop()
-            print("Waiting 5 seconds")
-            time.sleep(5)
-
-    except KeyboardInterrupt:
-        print("Program interrupted by user")
-
-    finally:
-        stop()
-        GPIO.cleanup()
+def move_reverse(duration=2):
+    """Move both motors in reverse for a specified duration."""
+    print("Moving in reverse...")
+    send_command(REVERSE_M1)
+    send_command(REVERSE_M2)
+    time.sleep(duration)
+    stop()
 
 if __name__ == "__main__":
-    motor_control()
+    try:
+        while True:
+            move_forward(2)
+            time.sleep(2)
+            move_reverse(5)
+            time.sleep(2)
+    except KeyboardInterrupt:
+        print("\nStopping program...")
+        stop()
+        ser.close()
