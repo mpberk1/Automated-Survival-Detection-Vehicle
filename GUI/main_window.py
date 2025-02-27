@@ -133,8 +133,13 @@ def left():
     MotorControl.turn_left(duration=2)
     addNotification("AGV Left Movement")
 def right():
-    MotorControl.turn_left(duration=2)
+    MotorControl.turn_right(duration=2)
     addNotification("AGV Right Movement")
+def stop():
+    #print('AGV stop movement')
+    MotorControl.stop()
+    addNotification("AGV Right Movement")
+
 
 def cameraFeed():
     global imgTk
@@ -391,6 +396,9 @@ leftButton.grid(row=3, column=0, padx=5, pady=5)
 
 rightButton = Button(arrowFrame, text='Right', width=3, height=2, command=right)
 rightButton.grid(row=3, column=2, padx=5, pady=5)
+
+stopButton = Button(arrowFrame, text='stop', width=3, height=2, command=halt)
+stopButton.grid(row=3, column=1, padx=5, pady=5)
 
 #mechanical arm
 armFrame = ttk.Frame(rightFrame)
