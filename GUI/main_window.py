@@ -10,7 +10,7 @@ from tkinter import filedialog
 from pathlib import Path
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import pithermalcam as ptc
+#import pithermalcam as ptc
 
 import queue
 import sounddevice as sd 
@@ -29,6 +29,10 @@ y_data = np.zeros(100)
 current_file = Path(__file__) # Path to this file
 project_root = current_file.parent.parent # Path to Automated-Survival-Detection-Vehicle
 sys.path.insert(0, str(project_root))
+
+deviceDriver_dir = project_root / "DeviceDrivers"
+sys.path.append(str(deviceDriver_dir))
+import MotorControl
 
 #update clock info
 def updateclock():
@@ -120,13 +124,17 @@ def updateBodyTempData():
 
 #agv movement algorithms
 def forward():
-    print('AGV forward movement')
+    MotorControl.move_forward(duration=2)
+    addNotification("AGV Forward Movement")
 def backward():
-    print('AGV backward movement')
+    MotorControl.move_reverse(duration=2)
+    addNotification("AGV Backward Movement")
 def left():
-    print('AGV left movement')
+    MotorControl.turn_left(duration=2)
+    addNotification("AGV Left Movement")
 def right():
-    print('AGV right movement')
+    MotorControl.turn_left(duration=2)
+    addNotification("AGV Right Movement")
 
 def cameraFeed():
     global imgTk
@@ -140,22 +148,22 @@ def cameraFeed():
     cameraLabel.after(10, cameraFeed)
 
 def readThermalCamera():
-    thermal_data = ptc.display_camera_live()
-    return thermal_data
+    #thermal_data = ptc.display_camera_live()
+    return #thermal_data
 
-def thermalCameraFeed():
-    global thermalImgTk
-    thermal_data = readThermalCamera()
+#def thermalCameraFeed():
+    # global thermalImgTk
+    # thermal_data = readThermalCamera()
 
-    # 8-bit image
-    thermal_img = Image.fromarray(thermal_data.astype('uint8'))
-    thermal_img = ImageOps.fit(thermal_img, (425, 250)) 
+    # # 8-bit image
+    # thermal_img = Image.fromarray(thermal_data.astype('uint8'))
+    # thermal_img = ImageOps.fit(thermal_img, (425, 250)) 
     
-    thermalImgTk = ImageTk.PhotoImage(image=thermal_img)
-    thermalCameraLabel.imgTk = thermalImgTk
-    thermalCameraLabel.config(image=thermalImgTk)
+    # thermalImgTk = ImageTk.PhotoImage(image=thermal_img)
+    # thermalCameraLabel.imgTk = thermalImgTk
+    # thermalCameraLabel.config(image=thermalImgTk)
     
-    thermalCameraLabel.after(1000, thermalCameraFeed)
+    # thermalCameraLabel.after(1000, thermalCameraFeed)
 
 #logging data from sensors
 notificationDetails = {}
@@ -420,7 +428,7 @@ cameraLabel.pack(fill='both', expand=True)
 thermalCameraLabel = Label(trackingLeftFrame, text='Thermal Camera Feed', fg='white', bg='black', width=350, height=50, pady=0)
 thermalCameraLabel.pack(fill='both', expand=True)
 
-thermalCameraFeed()
+#thermalCameraFeed()
 
 mapFrame = Frame(trackingTab)
 mapFrame.grid(row=0, column=1, sticky='nsew', padx=10, pady=10)
