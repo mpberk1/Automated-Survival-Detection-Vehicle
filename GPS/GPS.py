@@ -30,11 +30,7 @@ def gps_locator():
         print("You Are in {}, {}".format(city, state))
         print("Your latitude = {} and longitude = {}".format(lat, long))
         folium.Marker([lat, long], popup='Current Location').add_to(obj)
-
-        fileName = "C:/screengfg/Location" + str(datetime.date.today()) + ".html"
-        obj.save(fileName)
-
-        return fileName
+        return True
     except:
         return False
 
@@ -42,9 +38,3 @@ def gps_locator():
 if __name__ == "__main__":
     print("---------------GPS Using Python---------------\n")
     page = gps_locator()
-    print("\nOpening File.............")
-    dr = webdriver.Chrome()
-    dr.get(page)
-    time.sleep(4)
-    dr.quit()
-    print("\nBrowser Closed..............")
