@@ -30,9 +30,12 @@ current_file = Path(__file__) # Path to this file
 project_root = current_file.parent.parent # Path to Automated-Survival-Detection-Vehicle
 sys.path.insert(0, str(project_root))
 
-deviceDriver_dir = project_root / "DeviceDrivers"
-sys.path.append(str(deviceDriver_dir))
-import MotorControl
+# deviceDriver_dir = project_root / "DeviceDrivers"
+# sys.path.append(str(deviceDriver_dir))
+# import MotorControl
+
+gpsDir =project_root / "GPS"
+sys.path.append(str(gpsDir))
 
 #update clock info
 def updateclock():
@@ -90,6 +93,18 @@ def updateBatteryLevel():
     root.after(5000, updateBatteryLevel)
 
 #simulate heartbeat data update
+def updateAGVLocation():
+    import GPS
+    agvLocation = GPS.gps_locator()
+
+    if agvLocation and isinstance(agvLocation, tuple):
+        lat, long = agvLocation
+        locationDataEntry.delete(0, END)
+        locationDataEntry.insert(0, f"{lat}, {long}")
+
+    root.after(1000, updateAGVLocation)
+
+#simulate heartbeat data update
 def updateHeartbeatData():
     heartbeatValue = random.randint(60, 100)
     heartbeatDataEntry.delete(0, END)
@@ -124,20 +139,20 @@ def updateBodyTempData():
 
 #agv movement algorithms
 def forward():
-    MotorControl.move_forward(duration=2)
+    #MotorControl.move_forward(duration=2)
     addNotification("AGV Forward Movement")
 def backward():
-    MotorControl.move_reverse(duration=2)
+    #MotorControl.move_reverse(duration=2)
     addNotification("AGV Backward Movement")
 def left():
-    MotorControl.turn_left(duration=2)
+    #MotorControl.turn_left(duration=2)
     addNotification("AGV Left Movement")
 def right():
-    MotorControl.turn_right(duration=2)
+    #MotorControl.turn_right(duration=2)
     addNotification("AGV Right Movement")
 def stop():
     #print('AGV stop movement')
-    MotorControl.stop()
+    #MotorControl.stop()
     addNotification("AGV Right Movement")
 
 
@@ -368,11 +383,12 @@ locationFrame = ttk.Frame(rightFrame)
 locationFrame.grid(row=0, column=0, padx=10, pady=10, sticky='ew')
 
 locationLabel = ttk.Label(locationFrame, text='AGV Location')
-locationLabel.grid(row=1, column=0, padx=5, pady=(10,0), sticky='s')
+locationLabel.grid(row=1, column=0, padx=10, pady=(10,0), sticky='w')
 
-locationDataEntry = ttk.Entry(locationFrame, width=10)
+locationDataEntry = ttk.Entry(locationFrame, width=15)
 locationDataEntry.grid(row=2, column=0, padx=10, pady=(0,5), sticky='n')
 
+updateAGVLocation()
 updateBodyTempData()
 
 #agv manual movement arrows
@@ -397,7 +413,7 @@ leftButton.grid(row=3, column=0, padx=5, pady=5)
 rightButton = Button(arrowFrame, text='Right', width=3, height=2, command=right)
 rightButton.grid(row=3, column=2, padx=5, pady=5)
 
-stopButton = Button(arrowFrame, text='stop', width=3, height=2, command=halt)
+stopButton = Button(arrowFrame, text='stop', width=3, height=2, command=stop)
 stopButton.grid(row=3, column=1, padx=5, pady=5)
 
 #mechanical arm
