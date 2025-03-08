@@ -45,22 +45,46 @@ def updateclock():
     clockLabel.config(text=timeString)
     root.after(1000, updateclock)
 
-#agv map simulation
 def trackingMap():
     mapCanvas.delete("all")
-    
-    #for grid lines
-    for i in range(0, 500, 50):
-        mapCanvas.create_line(i, 0, i, 500, fill="gray")
-        mapCanvas.create_line(0, i, 500, i, fill="gray")
-    
-    #simulate the agv current pos
-    mapCanvas.create_oval(240, 240, 260, 260, fill="white", outline="blue", width=2, tags="AGV")
-    mapCanvas.create_text(250, 270, text="AGV", fill="white", font=("Helvetica", 10, "bold"))
 
-    #simulate surivior locations
-    survivors = [(100, 100), (400, 150), (350, 400)]
-    for x, y in survivors:
+    # Get dynamic canvas size
+    canvas_width = mapCanvas.winfo_width()  
+    canvas_height = mapCanvas.winfo_height()  
+
+    # Ensure we have valid dimensions before drawing
+    if canvas_width == 1 or canvas_height == 1:  # Prevents issues when canvas hasn't been drawn yet
+        root.after(100, trackingMap)  
+        return  
+
+    # Draw grid lines dynamically
+    grid_size = 50  
+    for i in range(0, canvas_width, grid_size):  
+        mapCanvas.create_line(i, 0, i, canvas_height, fill="gray")  # Vertical lines
+    for i in range(0, canvas_height, grid_size):  
+        mapCanvas.create_line(0, i, canvas_width, i, fill="gray")  # Horizontal lines
+
+    # Convert GPS coordinates to canvas coordinates (adjust scaling)
+    if lat is not None and long is not None:
+        agv_x = int((long + 180) / 360 * canvas_width)  
+        agv_y = int((90 - lat) / 180 * canvas_height)  
+
+        # Draw AGV position
+        mapCanvas.create_oval(agv_x - 10, agv_y - 10, agv_x + 10, agv_y + 10, 
+                              fill="white", outline="blue", width=3, tags="AGV")
+
+        # Display AGV coordinates
+        mapCanvas.create_text(agv_x, agv_y - 15, text=f"({lat:.4f}, {long:.4f})", 
+                              fill="white", font=("Helvetica", 14, "bold"))
+
+        # Label AGV
+        mapCanvas.create_text(agv_x, agv_y + 15, text="AGV", fill="white", font=("Helvetica", 14, "bold"))
+
+    # Simulate survivor locations (scaled dynamically)
+    survivors = [(0.2, 0.2), (0.8, 0.3), (0.7, 0.8)]  # Scaled survivor locations
+    for sx, sy in survivors:
+        x = int(sx * canvas_width)
+        y = int(sy * canvas_height)
         mapCanvas.create_oval(x - 10, y - 10, x + 10, y + 10, fill="red", outline="white", width=2)
 
     root.after(1000, trackingMap)
@@ -158,20 +182,23 @@ def stop():
     addNotification("AGV Right Movement")
 
 
+CAMERA_WIDTH=450
+CAMERA_HEIGHT=300
 def cameraFeed():
     global imgTk
     ret, frame = camera.read()
     if ret:
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame = cv2.resize(frame, (CAMERA_WIDTH, CAMERA_HEIGHT))
         img = Image.fromarray(frame)
         imgTk = ImageTk.PhotoImage(image=img)
         cameraLabel.imgTk = imgTk
         cameraLabel.config(image=imgTk)
     cameraLabel.after(10, cameraFeed)
 
-def readThermalCamera():
-    #thermal_data = ptc.display_camera_live()
-    return #thermal_data
+# def readThermalCamera():
+#     #thermal_data = ptc.display_camera_live()
+#     return #thermal_data
 
 #def thermalCameraFeed():
     # global thermalImgTk
@@ -445,26 +472,51 @@ collectDataButton.grid(row=0, column=2, padx=(10, 0), sticky='e')
 collectDataButton.config(font=('Arial', 14))
 collectDataButton.grid_configure(ipadx=5, ipady=10)
 
-#agv tracking tab
-trackingLeftFrame = Frame(trackingTab)
-trackingLeftFrame.grid(row=0, column=0, sticky='nsew', padx=10, pady=10)
+# Camera Frame
+cameraFrame = ttk.Frame(trackingTab, width=10, height=10)
+cameraFrame.grid(row=0, column=0, padx=0, pady=(10, 0), sticky='news')
 
-cameraLabel = Label(trackingLeftFrame, text='Label', fg='white', bg='black', width=350, height=20)
-cameraLabel.pack(fill='both', expand=True)
+cameraTextLabel = ttk.Label(cameraFrame, text='AGV Camera', padding=(10, 5), font=("Arial", 16, "bold"))
+cameraTextLabel.grid(row=0, column=0, sticky='nsew')
 
-thermalCameraLabel = Label(trackingLeftFrame, text='Thermal Camera Feed', fg='white', bg='black', width=350, height=50, pady=0)
-thermalCameraLabel.pack(fill='both', expand=True)
+cameraLabel = Label(cameraFrame, text='Camera', fg='white', bg='black', width=CAMERA_WIDTH, height=CAMERA_HEIGHT)
+cameraLabel.grid(row=1, column=0, sticky='nsew', padx=10, pady=(0,10))
 
-#thermalCameraFeed()
+# Thermal Camera Frame
+ThermalCameraFrame = ttk.Frame(trackingTab, width=10, height=10)
+ThermalCameraFrame.grid(row=1, column=0, padx=0, pady=10, sticky='news')
 
-mapFrame = Frame(trackingTab)
-mapFrame.grid(row=0, column=1, sticky='nsew', padx=10, pady=10)
+ThermalCameraTextLabel = ttk.Label(ThermalCameraFrame, text='AGV Thermal Camera', padding=(10, 5), font=("Arial", 16, "bold"))
+ThermalCameraTextLabel.grid(row=0, column=0, sticky='nsew')
 
-mapCanvas = Canvas(mapFrame, width=300, height=500, bg='black')
-mapCanvas.pack(fill='both', expand=True)
+ThermalCameraLabel = Label(ThermalCameraFrame, text='Thermal Camera', fg='white', bg='blue', width=50, height=18)
+ThermalCameraLabel.grid(row=1, column=0, sticky='news', padx=10, pady=(0,10))
+
+# Map Frame
+mapFrame = ttk.Frame(trackingTab)
+mapFrame.grid(row=0, column=1, rowspan=2, padx=0, pady=10, sticky='news')
+
+# Ensure mapFrame expands properly
+mapFrame.grid_rowconfigure(0, weight=0)
+mapFrame.grid_rowconfigure(1, weight=1)
+mapFrame.grid_columnconfigure(0, weight=1)
+
+AGVTextLabel = ttk.Label(mapFrame, text='AGV Environment Map', padding=(10, 5), font=("Arial", 16, "bold"))
+AGVTextLabel.grid(row=0, column=0, sticky='nsew')
+
+# Map Canvas
+mapCanvas = Canvas(mapFrame, bg='black', width=500, height=10)
+mapCanvas.grid(row=1, column=0, rowspan=2, sticky='news', padx=10, pady=(0,10))
+
+# Ensure trackingTab expands properly
+trackingTab.grid_rowconfigure(0, weight=1)
+trackingTab.grid_rowconfigure(1, weight=1)
+trackingTab.grid_columnconfigure(0, weight=1)
+trackingTab.grid_columnconfigure(1, weight=1)
 
 camera = cv2.VideoCapture(0)
 cameraFeed()
+# thermalCameraFeed()
 trackingMap()
 
 #survivor detection tab
