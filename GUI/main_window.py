@@ -12,6 +12,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 #import pithermalcam as ptc
 
+import speech_recognition as sr
 import queue
 import sounddevice as sd 
 import random
@@ -21,6 +22,7 @@ import numpy as np
 import random
 import cv2
 import csv
+import threading
 
 audio_queue = queue.Queue()
 y_data = np.zeros(100)
@@ -138,12 +140,28 @@ def updateHeartbeatData():
 
     root.after(1000, updateHeartbeatData)
 
-#simulate vocal data
+#update vocal data
 def updateVocalData():
-    vocalValue = random.choice(['Hello', 'Yes', 'No'])
-    vocalDataEntry.delete(0, END)
-    vocalDataEntry.insert(0, vocalValue)
 
+    def recognize_speech():
+        recognizer = sr.Recognizer()
+        with sr.Microphone() as source:
+            recognizer.adjust_for_ambient_noise(source, duration=0.2)
+            print("Listening.")
+            try:
+                audio = recognizer.listen(source)
+                vocalValue = recognizer.recognize_google(audio)
+                addNotification("Voice detected")
+            except sr.UnknownValueError:
+                vocalValue = ""
+            except sr.RequestError:
+                vocalValue = "API error"
+
+        root.after(0, lambda: vocalDataEntry.delete(0, END))
+        root.after(0, lambda: vocalDataEntry.insert(0, vocalValue))
+            
+    threading.Thread(target=recognize_speech, daemon=True).start()
+    
     root.after(3000, updateVocalData)
 
 # Function to handle vocal button press
@@ -177,13 +195,9 @@ def right():
     #MotorControl.turn_right(duration=2)
     addNotification("AGV Right Movement")
 def stop():
-    #print('AGV stop movement')
     #MotorControl.stop()
     addNotification("AGV Right Movement")
 
-
-CAMERA_WIDTH=450
-CAMERA_HEIGHT=300
 def cameraFeed():
     global imgTk
     ret, frame = camera.read()
@@ -215,22 +229,37 @@ def cameraFeed():
     # thermalCameraLabel.after(1000, thermalCameraFeed)
 
 #logging data from sensors
+#validate input
+def validate_input(value, expected_type):
+    try:
+        if expected_type=="int":
+            return int(value)
+        elif expected_type=="float":
+            return float(value)
+    except ValueError:
+        return None
+
+#log data
 notificationDetails = {}
 def logSensorData():
     global lat, long
     try:
-        heartbeat = heartbeatDataEntry.get()
+        heartbeat = validate_input(heartbeatDataEntry.get(), "int")
         vocal = vocalDataEntry.get()
-        bodyTemp = bodytempDataEntry.get()
+        bodyTemp = validate_input(bodytempDataEntry.get(), "float")
 
-        if not heartbeat or not vocal or not bodyTemp:
-            raise ValueError('Error check..')
+        if heartbeat is None or vocal=="" or bodyTemp is None:
+            raise ValueError('Invalid Input')
 
         eastern = ZoneInfo('America/New_York')
         currentTime = datetime.now(eastern).strftime('%Y-%m-%d %H:%M:%S')
         location = f"{lat}, {long}"
 
-        dataTable.insert('', 'end', values=(location, currentTime, heartbeat, vocal, bodyTemp))
+        try:
+            dataTable.insert('', 'end', values=(location, currentTime, heartbeat, vocal, bodyTemp))
+        except Exception as e:
+            print(f"Error: {e}")
+            addNotification(f"Error: {e}")
 
         shortMessage = "Data logged successfully"        
         fullMessage = f"Data logged successfully at {currentTime} - {heartbeat} bpm, {vocal}, {bodyTemp} °C"
@@ -248,7 +277,6 @@ def logSensorData():
 
 def exportData():
     filePath = filedialog.asksaveasfilename(defaultextension='.csv', filetypes=[('CSV files', '*.csv')])
-
 
     if filePath:
         with open(filePath, mode='w', newline='') as file:
@@ -274,7 +302,7 @@ root.config(bg='black')
 notebook = ttk.Notebook(root)
 notebook.pack(fill='both', expand=True)
 
-# Create tabs
+#create tabs
 updatesTab = ttk.Frame(notebook)
 trackingTab = ttk.Frame(notebook)
 survivorTab = ttk.Frame(notebook)
@@ -419,7 +447,6 @@ locationDataEntry = ttk.Entry(locationFrame, width=30)
 locationDataEntry.grid(row=2, column=0, padx=10, pady=(0,5), sticky='n')
 
 updateAGVLocation()
-updateBodyTempData()
 
 #agv manual movement arrows
 movementFrame = ttk.Frame(rightFrame)
@@ -472,7 +499,11 @@ collectDataButton.grid(row=0, column=2, padx=(10, 0), sticky='e')
 collectDataButton.config(font=('Arial', 14))
 collectDataButton.grid_configure(ipadx=5, ipady=10)
 
-# Camera Frame
+#agv real-time updates tab
+#camera frame
+CAMERA_WIDTH=450
+CAMERA_HEIGHT=300
+
 cameraFrame = ttk.Frame(trackingTab, width=10, height=10)
 cameraFrame.grid(row=0, column=0, padx=0, pady=(10, 0), sticky='news')
 
@@ -482,7 +513,10 @@ cameraTextLabel.grid(row=0, column=0, sticky='nsew')
 cameraLabel = Label(cameraFrame, text='Camera', fg='white', bg='black', width=CAMERA_WIDTH, height=CAMERA_HEIGHT)
 cameraLabel.grid(row=1, column=0, sticky='nsew', padx=10, pady=(0,10))
 
-# Thermal Camera Frame
+camera = cv2.VideoCapture(0)
+cameraFeed()
+
+#thermal camera frame
 ThermalCameraFrame = ttk.Frame(trackingTab, width=10, height=10)
 ThermalCameraFrame.grid(row=1, column=0, padx=0, pady=10, sticky='news')
 
@@ -492,34 +526,22 @@ ThermalCameraTextLabel.grid(row=0, column=0, sticky='nsew')
 ThermalCameraLabel = Label(ThermalCameraFrame, text='Thermal Camera', fg='white', bg='blue', width=50, height=18)
 ThermalCameraLabel.grid(row=1, column=0, sticky='news', padx=10, pady=(0,10))
 
-# Map Frame
+#thermalCameraFeed()
+
+#map frame
 mapFrame = ttk.Frame(trackingTab)
 mapFrame.grid(row=0, column=1, rowspan=2, padx=0, pady=10, sticky='news')
-
-# Ensure mapFrame expands properly
-mapFrame.grid_rowconfigure(0, weight=0)
-mapFrame.grid_rowconfigure(1, weight=1)
-mapFrame.grid_columnconfigure(0, weight=1)
 
 AGVTextLabel = ttk.Label(mapFrame, text='AGV Environment Map', padding=(10, 5), font=("Arial", 16, "bold"))
 AGVTextLabel.grid(row=0, column=0, sticky='nsew')
 
-# Map Canvas
 mapCanvas = Canvas(mapFrame, bg='black', width=500, height=10)
 mapCanvas.grid(row=1, column=0, rowspan=2, sticky='news', padx=10, pady=(0,10))
 
-# Ensure trackingTab expands properly
-trackingTab.grid_rowconfigure(0, weight=1)
-trackingTab.grid_rowconfigure(1, weight=1)
-trackingTab.grid_columnconfigure(0, weight=1)
-trackingTab.grid_columnconfigure(1, weight=1)
-
-camera = cv2.VideoCapture(0)
-cameraFeed()
-# thermalCameraFeed()
 trackingMap()
 
 #survivor detection tab
+#table
 tableFrame = ttk.Frame(survivorTab)
 tableFrame.pack(fill='both', expand=True, padx=10, pady=10)
 
@@ -541,6 +563,9 @@ dataTable.column('Body Temp °C', width=100, anchor='center')
 exportButton = ttk.Button(survivorTab, text='Export Data', command = exportData)
 exportButton.pack(pady=10)
 
+
+# listeners
+# view notification
 def viewNotification(event):
     index = notificationList.curselection()
     if index:
@@ -575,6 +600,15 @@ trackingTab.rowconfigure(0,weight=1)
 bottomFrame.columnconfigure(0, weight=0)
 bottomFrame.columnconfigure(1, weight=1)
 bottomFrame.columnconfigure(2, weight=0)
+
+mapFrame.grid_rowconfigure(0, weight=0)
+mapFrame.grid_rowconfigure(1, weight=1)
+mapFrame.grid_columnconfigure(0, weight=1)
+
+trackingTab.grid_rowconfigure(0, weight=1)
+trackingTab.grid_rowconfigure(1, weight=1)
+trackingTab.grid_columnconfigure(0, weight=1)
+trackingTab.grid_columnconfigure(1, weight=1)
 
 def main():
     root.mainloop()
