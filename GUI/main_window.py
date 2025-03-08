@@ -248,8 +248,12 @@ def logSensorData():
         vocal = vocalDataEntry.get()
         bodyTemp = validate_input(bodytempDataEntry.get(), "float")
 
-        if heartbeat is None or vocal=="" or bodyTemp is None:
+        if bodyTemp is None:
             raise ValueError('Invalid Input')
+        if heartbeat=="":
+            heartbeat="none"
+        if vocal =="":
+            vocal="none"
 
         eastern = ZoneInfo('America/New_York')
         currentTime = datetime.now(eastern).strftime('%Y-%m-%d %H:%M:%S')
