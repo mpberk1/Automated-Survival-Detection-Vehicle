@@ -93,14 +93,16 @@ def updateBatteryLevel():
     root.after(5000, updateBatteryLevel)
 
 #simulate heartbeat data update
+
+lat, long = None, None
 def updateAGVLocation():
+    global lat, long
     import GPS
     agvLocation = GPS.gps_locator()
-
     if agvLocation and isinstance(agvLocation, tuple):
-        lat, long = agvLocation
+        city, state, lat, long = agvLocation
         locationDataEntry.delete(0, END)
-        locationDataEntry.insert(0, f"{lat}, {long}")
+        locationDataEntry.insert(0, f"{city}, {state}: {lat}, {long}")
 
     root.after(1000, updateAGVLocation)
 
@@ -188,6 +190,7 @@ def readThermalCamera():
 #logging data from sensors
 notificationDetails = {}
 def logSensorData():
+    global lat, long
     try:
         heartbeat = heartbeatDataEntry.get()
         vocal = vocalDataEntry.get()
@@ -198,7 +201,7 @@ def logSensorData():
 
         eastern = ZoneInfo('America/New_York')
         currentTime = datetime.now(eastern).strftime('%Y-%m-%d %H:%M:%S')
-        location = 'Random Location'
+        location = f"{lat}, {long}"
 
         dataTable.insert('', 'end', values=(location, currentTime, heartbeat, vocal, bodyTemp))
 
@@ -211,10 +214,10 @@ def logSensorData():
     except Exception as e:
         errorMessage='Error in logging data'
         addNotification(errorMessage)
-        addNotification(f'Error: {str(e)}')
+        addNotification(f"Error: {str(e)}")
 
-        notificationDetails[shortMessage] = fullMessage
-        addNotification(shortMessage)
+        # notificationDetails[shortMessage] = fullMessage
+        # addNotification(shortMessage)
 
 def exportData():
     filePath = filedialog.asksaveasfilename(defaultextension='.csv', filetypes=[('CSV files', '*.csv')])
@@ -385,7 +388,7 @@ locationFrame.grid(row=0, column=0, padx=10, pady=10, sticky='ew')
 locationLabel = ttk.Label(locationFrame, text='AGV Location')
 locationLabel.grid(row=1, column=0, padx=10, pady=(10,0), sticky='w')
 
-locationDataEntry = ttk.Entry(locationFrame, width=15)
+locationDataEntry = ttk.Entry(locationFrame, width=30)
 locationDataEntry.grid(row=2, column=0, padx=10, pady=(0,5), sticky='n')
 
 updateAGVLocation()

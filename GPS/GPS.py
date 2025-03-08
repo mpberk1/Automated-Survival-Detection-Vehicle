@@ -27,11 +27,11 @@ def gps_locator():
     obj = folium.Map(location=[0, 0], zoom_start=2)
     try:
         lat, long, city, state = locationCoordinates()
-        print("{}, {}".format(city, state))
+        # print("{}, {}".format(city, state))
         # print("Latitude = {}, Longitude = {}".format(lat, long))
         folium.Marker([lat, long], popup='Current Location').add_to(obj)
 
-        return lat, long
+        return city, state, lat, long
     except Exception as e:
         print(f"Error: {e}")
         return False
