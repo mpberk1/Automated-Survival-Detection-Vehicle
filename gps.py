@@ -39,7 +39,7 @@ def gps_locator():
         return False
 
 #Main method
-if name == "main":
+if __name__ == "__main__":
     print("---------------GPS Using Python---------------\n")
     page = gps_locator()
     print("\nOpening File.............")

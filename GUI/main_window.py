@@ -1,4 +1,3 @@
-
 import tkinter as tk
 from tkinter import *
 from tkinter import ttk
@@ -24,8 +23,10 @@ import cv2
 import csv
 import threading
 
+#global variables
 audio_queue = queue.Queue()
 y_data = np.zeros(100)
+stream = None
 
 #Dynamically get file paths
 current_file = Path(__file__) # Path to this file
@@ -54,9 +55,9 @@ def trackingMap():
     canvas_width = mapCanvas.winfo_width()  
     canvas_height = mapCanvas.winfo_height()  
 
-    # Ensure we have valid dimensions before drawing
+    # Ensure valid dimensions
     if canvas_width == 1 or canvas_height == 1:  # Prevents issues when canvas hasn't been drawn yet
-        root.after(100, trackingMap)  
+        root.after(100, trackingMap)
         return  
 
     # Draw grid lines dynamically
@@ -66,28 +67,44 @@ def trackingMap():
     for i in range(0, canvas_height, grid_size):  
         mapCanvas.create_line(0, i, canvas_width, i, fill="gray")  # Horizontal lines
 
-    # Convert GPS coordinates to canvas coordinates (adjust scaling)
-    if lat is not None and long is not None:
-        agv_x = int((long + 180) / 360 * canvas_width)  
-        agv_y = int((90 - lat) / 180 * canvas_height)  
+    # Default AGV coordinates if not available
+    if lat is None or long is None:
+        agv_lat, agv_long = 0, 0  # Center at (0,0) if no GPS yet
+    else:
+        agv_lat, agv_long = lat, long
 
-        # Draw AGV position
-        mapCanvas.create_oval(agv_x - 10, agv_y - 10, agv_x + 10, agv_y + 10, 
-                              fill="white", outline="blue", width=3, tags="AGV")
+    # Center of the canvas for AGV
+    agv_x = canvas_width // 2
+    agv_y = canvas_height // 2
 
-        # Display AGV coordinates
-        mapCanvas.create_text(agv_x, agv_y - 15, text=f"({lat:.4f}, {long:.4f})", 
-                              fill="white", font=("Helvetica", 14, "bold"))
+    # Draw AGV position in center
+    mapCanvas.create_oval(agv_x - 10, agv_y - 10, agv_x + 10, agv_y + 10, 
+                          fill="white", outline="blue", width=3, tags="AGV")
 
-        # Label AGV
-        mapCanvas.create_text(agv_x, agv_y + 15, text="AGV", fill="white", font=("Helvetica", 14, "bold"))
+    # Display AGV coordinates
+    mapCanvas.create_text(agv_x, agv_y - 15, text=f"({agv_lat:.4f}, {agv_long:.4f})", 
+                          fill="white", font=("Helvetica", 14, "bold"))
 
-    # Simulate survivor locations (scaled dynamically)
-    survivors = [(0.2, 0.2), (0.8, 0.3), (0.7, 0.8)]  # Scaled survivor locations
-    for sx, sy in survivors:
-        x = int(sx * canvas_width)
-        y = int(sy * canvas_height)
-        mapCanvas.create_oval(x - 10, y - 10, x + 10, y + 10, fill="red", outline="white", width=2)
+    # Label AGV
+    mapCanvas.create_text(agv_x, agv_y + 15, text="AGV", fill="white", font=("Helvetica", 14, "bold"))
+
+    # Simulated survivor locations (relative positions)
+    # Example survivors around AGV
+    survivors = [(-0.001, -0.001), (0.002, -0.0015), (0.0015, 0.002)]  # Offset in degrees (lat/long difference)
+
+    # Scaling factor to adjust how far survivors are from AGV on screen
+    scale_factor = 100000  # Adjust for your map scale (higher = closer)
+
+    for s_lat_offset, s_long_offset in survivors:
+        # Compute survivor relative position in pixels
+        offset_x = s_long_offset * scale_factor
+        offset_y = -s_lat_offset * scale_factor  # Negative to invert Y-axis for canvas
+
+        survivor_x = agv_x + offset_x
+        survivor_y = agv_y + offset_y
+
+        mapCanvas.create_oval(survivor_x - 10, survivor_y - 10, survivor_x + 10, survivor_y + 10, 
+                              fill="red", outline="white", width=2)
 
     root.after(1000, trackingMap)
 
@@ -159,9 +176,7 @@ def updateVocalData():
 
         root.after(0, lambda: vocalDataEntry.delete(0, END))
         root.after(0, lambda: vocalDataEntry.insert(0, vocalValue))
-            
     threading.Thread(target=recognize_speech, daemon=True).start()
-    
     root.after(3000, updateVocalData)
 
 # Function to handle vocal button press
@@ -298,8 +313,9 @@ def exportData():
 root = Tk()
 root.title('AGV-HSD')
 root.geometry('1000x600')
-root.minsize(1050, 800)
-root.maxsize(1050, 800)
+root.minsize(1050, 700)
+# root.maxsize(1050, 800)
+root.resizable(True, True)
 root.config(bg='black')
 
 #tabs frame
@@ -318,7 +334,7 @@ notebook.add(survivorTab, text='Real-Time Survivor Detection Status')
 
 #clock label
 clockLabel = ttk.Label(root, text='', font=('Helvetica', 18))
-clockLabel.place(x=1050, y=0)
+clockLabel.place(x=850, y=0)
 updateclock()
 
 #AGV Status Updates tab
@@ -364,13 +380,22 @@ vocalLabel = ttk.Label(vocalFrame, text='Vocal Response')
 vocalLabel.grid(row=1, column=0, padx=5, pady=(10,0), sticky='s')
 
 vocalDataEntry = ttk.Entry(vocalFrame, width=10)
-vocalDataEntry.grid(row=2, column=0, padx=10, pady=(0,5), sticky='n')
+vocalDataEntry.grid(row=2, column=0, padx=10, pady=(0,5), sticky='n') 
+
+#buttons
+play_icon = tk.PhotoImage(file="play_icon.png")
+play_button = tk.Button(vocalFrame, image=play_icon, command=lambda: print("Button"),  borderwidth=0)
+play_button.grid(row=3, column=0, padx=(15,0), pady=0, sticky='nw')
+
+pause_icon = tk.PhotoImage(file="pause_icon.png")
+pause_button = tk.Button(vocalFrame, image=pause_icon, command=lambda: print("Button"),  borderwidth=0)
+pause_button.grid(row=3, column=0, padx=(60,0), pady=0, sticky='nw')
 
 updateVocalData()
 
 #send vocal response
 vocalButtonFrame = ttk.Frame(rightFrame)
-vocalButtonFrame.grid(row=3, column=0, padx=(100,10), pady=(60,10), sticky='ns')
+vocalButtonFrame.grid(row=3, column=0, padx=(100,10), pady=(40,10), sticky='ns')
 
 sendVocalsButton = ttk.Button(vocalButtonFrame, text="Send Vocal Data", command=playVocalSound)
 sendVocalsButton.grid(row=0, column=0, padx=(25,5), pady=(0,10), sticky='n')
@@ -395,18 +420,21 @@ canvas.get_tk_widget().grid(row=1, column=0, padx=5, pady=5, sticky='ew')
 
 def audio_callback(indata, frames, time, status):
     if status:
-        print(status)
-        addNotification(status)
+        print(f"Audio Status: {status}")
+        addNotification(f"Audio Status: {status}")
     
-    global audio_queue
-    audio_queue.put(np.squeeze(indata))
+    audio_data = indata[:,0]
+    # global audio_queue
+    audio_queue.put(audio_data)
     # print(f"Audio Data Shape: {indata.shape}")
 
 def updateWaveform():
     global y_data
     if not audio_queue.empty():
         audio_data = audio_queue.get()
-        
+
+        audio_data = audio_data / np.max(np.abs(audio_data)) if np.max(np.abs(audio_data)) > 0 else audio_data
+
         # Clip or pad data to exactly 100 samples
         y_data = np.pad(audio_data, (0, max(0, 100 - len(audio_data))), mode='constant')[:100]
     else:
@@ -417,15 +445,26 @@ def updateWaveform():
     
     root.after(50, updateWaveform)
 
-line, = ax.plot(np.arange(100), y_data, lw=1, color='black')
-stream = sd.InputStream(callback=audio_callback, channels=1, samplerate=44100, blocksize=100)
+def start_audio_stream():
+    global stream
+    try:
+        stream = sd.InputStream(callback=audio_callback, channels=1, samplerate=44100, blocksize=100)
+        stream.start()
+        print("Audio stream started")
+        addNotification("Audio stream started")
+    except Exception as e:
+        print(f"Failed to stream audio: {e}")
+        addNotification(f"Audio Stream Error: {e}")
 
-try:
-    stream.start()
-except Exception as e:
-    print(f"Failed to stream audio: {e}")
+# line, = ax.plot(np.arange(100), y_data, lw=1, color='black')
+# stream = sd.InputStream(callback=audio_callback, channels=1, samplerate=44100, blocksize=100)
 
+# try:
+#     stream.start()
+# except Exception as e:
+#     print(f"Failed to stream audio: {e}")
 
+start_audio_stream()
 updateWaveform()
 
 #body temp data
@@ -447,7 +486,7 @@ locationFrame.grid(row=0, column=0, padx=10, pady=10, sticky='ew')
 locationLabel = ttk.Label(locationFrame, text='AGV Location')
 locationLabel.grid(row=1, column=0, padx=10, pady=(10,0), sticky='w')
 
-locationDataEntry = ttk.Entry(locationFrame, width=30)
+locationDataEntry = ttk.Entry(locationFrame, width=50)
 locationDataEntry.grid(row=2, column=0, padx=10, pady=(0,5), sticky='n')
 
 updateAGVLocation()
@@ -527,7 +566,7 @@ ThermalCameraFrame.grid(row=1, column=0, padx=0, pady=10, sticky='news')
 ThermalCameraTextLabel = ttk.Label(ThermalCameraFrame, text='AGV Thermal Camera', padding=(10, 5), font=("Arial", 16, "bold"))
 ThermalCameraTextLabel.grid(row=0, column=0, sticky='nsew')
 
-ThermalCameraLabel = Label(ThermalCameraFrame, text='Thermal Camera', fg='white', bg='blue', width=50, height=18)
+ThermalCameraLabel = Label(ThermalCameraFrame, text='OFFLINE', fg='red', bg='black', width=50, height=18)
 ThermalCameraLabel.grid(row=1, column=0, sticky='news', padx=10, pady=(0,10))
 
 #thermalCameraFeed()
@@ -568,7 +607,6 @@ exportButton = ttk.Button(survivorTab, text='Export Data', command = exportData)
 exportButton.pack(pady=10)
 
 
-# listeners
 # view notification
 def viewNotification(event):
     index = notificationList.curselection()
@@ -591,7 +629,6 @@ notificationList.bind("<Double-1>", viewNotification)
 #for window scaling
 updatesTab.columnconfigure(1, weight=1)
 updatesTab.rowconfigure(0, weight=1)
-
 
 rightFrame.rowconfigure((0,1,2,3, 4), weight=1, uniform='column')
 rightFrame.columnconfigure((0,1), weight=1)

@@ -8,7 +8,7 @@ import time
 # This method returns the actual coordinates using our IP address
 def locationCoordinates():
     try:
-        response = requests.get('https://ipinfo.io')
+        response = requests.get('https://ipinfo.io/')
         data = response.json()
         loc = data['loc'].split(',')
         lat, long = float(loc[0]), float(loc[1])

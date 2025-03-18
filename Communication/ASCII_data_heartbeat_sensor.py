@@ -88,23 +88,27 @@ def process_sensor_data(data):
             move_info = data[4]
 
             if presence_info == SOMEONE_HERE:
-                    print("🟢 **Human detected: Someone is here**")
+                    print("**Human detected: Someone is here**")
+                    status ="**Human detected: Someone is here**"
             if presence_info == NOONE_HERE:
-                    print("🔴 **No human detected**")
+                    print("**No human detected**")
+                    status = "**No human detected**"
 
             if move_info == STATIONARY:
-                    print("🔵 **Person is stationary**")
+                    print("**Person is stationary**")
+                    status = "**Person is stationary**"
             if move_info == MOVEMENT:
-                    print("🟠 **Person is moving**")
+                    print("**Person is moving**")
+                    status = "**Person is moving**"
 
         elif sensor_type == FALL_DETECTION:
             fall_status = data[3]
             
             if fall_status == NO_FALL:
-                print("✅ **No fall detected**")
+                print("**No fall detected**")
             
             elif fall_status == FALL_DOWN:
-                print("⚠️ **FALL DETECTED! Immediate attention needed!**")
+                print("**FALL DETECTED! Immediate attention needed!**")
         else:
             print(f"❓ Unknown sensor type: {sensor_type}")
 
