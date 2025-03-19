@@ -109,8 +109,12 @@ def trackingMap():
     root.after(1000, trackingMap)
 
 #add notification to notification list
-def addNotification(notification):
-    notificationList.insert(END, notification)
+def addNotification(short_message, full_message=None):
+    if full_message is None:
+        notificationList.insert(END, short_message)
+    else:
+        notificationList.insert(END, short_message)
+        notificationDetails[short_message] = full_message
 
 #view notification in as new window
 def viewNotification(event):
@@ -183,10 +187,10 @@ def updateVocalData():
 def playVocalSound():
     try:
         subprocess.run(['python', project_root/"Sound/soundDriver.py"], check=True)
-        addNotification("Sound played successfully")
+        addNotification("Sound played successfully","Sound played successfully")
     except Exception as e:
         error_message = f"Error playing sound: {str(e)}"
-        addNotification(error_message)
+        addNotification(error_message,error_message)
 
 #simulate body temp data
 def updateBodyTempData():
@@ -211,7 +215,7 @@ def right():
     addNotification("AGV Right Movement")
 def stop():
     #MotorControl.stop()
-    addNotification("AGV Right Movement")
+    addNotification("AGV Stop")
 
 def cameraFeed():
     global imgTk
@@ -278,21 +282,14 @@ def logSensorData():
             dataTable.insert('', 'end', values=(location, currentTime, heartbeat, vocal, bodyTemp))
         except Exception as e:
             print(f"Error: {e}")
-            addNotification(f"Error: {e}")
+            addNotification(f"Error: {e}",f"Error: {e}")
 
         shortMessage = "Data logged successfully"        
         fullMessage = f"Data logged successfully at {currentTime} - {heartbeat} bpm, {vocal}, {bodyTemp} °C"
-
-        notificationDetails[shortMessage] = fullMessage
-        addNotification(shortMessage)
+        addNotification(shortMessage,fullMessage)
         
     except Exception as e:
-        errorMessage='Error in logging data'
-        addNotification(errorMessage)
-        addNotification(f"Error: {str(e)}")
-
-        # notificationDetails[shortMessage] = fullMessage
-        # addNotification(shortMessage)
+        addNotification('Error in logging data', f"Error: {str(e)}")
 
 def exportData():
     filePath = filedialog.asksaveasfilename(defaultextension='.csv', filetypes=[('CSV files', '*.csv')])
@@ -307,7 +304,7 @@ def exportData():
                 rowData = dataTable.item(row)['values']
                 writer.writerow(rowData)
 
-        addNotification('Data Exported successfully')
+        addNotification('Data Exported successfully','Data Exported successfully')
     
 #main window
 root = Tk()
@@ -326,11 +323,13 @@ notebook.pack(fill='both', expand=True)
 updatesTab = ttk.Frame(notebook)
 trackingTab = ttk.Frame(notebook)
 survivorTab = ttk.Frame(notebook)
+pathTab = ttk.Frame(notebook)
 
 #add tabs to notebook
 notebook.add(updatesTab, text='AGV Status Updates')
 notebook.add(trackingTab, text='Real-Time AGV Tracking')
 notebook.add(survivorTab, text='Real-Time Survivor Detection Status')
+notebook.add(pathTab, text='AGV Path')
 
 #clock label
 clockLabel = ttk.Label(root, text='', font=('Helvetica', 18))
@@ -382,12 +381,13 @@ vocalLabel.grid(row=1, column=0, padx=5, pady=(10,0), sticky='s')
 vocalDataEntry = ttk.Entry(vocalFrame, width=10)
 vocalDataEntry.grid(row=2, column=0, padx=10, pady=(0,5), sticky='n') 
 
-#buttons
-play_icon = tk.PhotoImage(file="play_icon.png")
+#microphone buttons
+
+play_icon = tk.PhotoImage(file=project_root/"GUI/play_icon.png")
 play_button = tk.Button(vocalFrame, image=play_icon, command=lambda: print("Button"),  borderwidth=0)
 play_button.grid(row=3, column=0, padx=(15,0), pady=0, sticky='nw')
 
-pause_icon = tk.PhotoImage(file="pause_icon.png")
+pause_icon = tk.PhotoImage(file=project_root/"GUI/pause_icon.png")
 pause_button = tk.Button(vocalFrame, image=pause_icon, command=lambda: print("Button"),  borderwidth=0)
 pause_button.grid(row=3, column=0, padx=(60,0), pady=0, sticky='nw')
 
@@ -421,7 +421,7 @@ canvas.get_tk_widget().grid(row=1, column=0, padx=5, pady=5, sticky='ew')
 def audio_callback(indata, frames, time, status):
     if status:
         print(f"Audio Status: {status}")
-        addNotification(f"Audio Status: {status}")
+        addNotification(f"Audio Status: {status}",f"Audio Status: {status}")
     
     audio_data = indata[:,0]
     # global audio_queue
@@ -451,10 +451,10 @@ def start_audio_stream():
         stream = sd.InputStream(callback=audio_callback, channels=1, samplerate=44100, blocksize=100)
         stream.start()
         print("Audio stream started")
-        addNotification("Audio stream started")
+        addNotification("Audio stream started","Audio stream started")
     except Exception as e:
         print(f"Failed to stream audio: {e}")
-        addNotification(f"Audio Stream Error: {e}")
+        addNotification(f"Audio Stream Error: {e}",f"Audio Stream Error: {e}")
 
 # line, = ax.plot(np.arange(100), y_data, lw=1, color='black')
 # stream = sd.InputStream(callback=audio_callback, channels=1, samplerate=44100, blocksize=100)
