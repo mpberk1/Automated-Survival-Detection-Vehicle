@@ -14,6 +14,14 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import speech_recognition as sr
 import queue
 import sounddevice as sd 
+import importlib.util
+
+module_path = "/home/agv/Desktop/Automated-Survival-Detection-Vehicle/PiThermalCam/piThermCam.py"
+spec = importlib.util.spec_from_file_location("piThermCam", module_path)
+piThermCam = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(piThermCam)
+
+thermal_camera = piThermCam.pithermalcam()
 import random
 import sys
 import subprocess
@@ -229,23 +237,6 @@ def cameraFeed():
         cameraLabel.config(image=imgTk)
     cameraLabel.after(10, cameraFeed)
 
-# def readThermalCamera():
-#     #thermal_data = ptc.display_camera_live()
-#     return #thermal_data
-
-#def thermalCameraFeed():
-    # global thermalImgTk
-    # thermal_data = readThermalCamera()
-
-    # # 8-bit image
-    # thermal_img = Image.fromarray(thermal_data.astype('uint8'))
-    # thermal_img = ImageOps.fit(thermal_img, (425, 250)) 
-    
-    # thermalImgTk = ImageTk.PhotoImage(image=thermal_img)
-    # thermalCameraLabel.imgTk = thermalImgTk
-    # thermalCameraLabel.config(image=thermalImgTk)
-    
-    # thermalCameraLabel.after(1000, thermalCameraFeed)
 
 #logging data from sensors
 #validate input
@@ -568,6 +559,31 @@ ThermalCameraTextLabel.grid(row=0, column=0, sticky='nsew')
 
 ThermalCameraLabel = Label(ThermalCameraFrame, text='OFFLINE', fg='red', bg='black', width=50, height=18)
 ThermalCameraLabel.grid(row=1, column=0, sticky='news', padx=10, pady=(0,10))
+
+ThermalCameraLabel = ttk.Label(trackingTab)
+ThermalCameraLabel.grid(row=0, column=0, padx=10, pady=10)
+
+# Update the thermal camera feed function
+def update_thermal_camera():
+    global thermalImgTk
+
+    # Get the thermal frame from the camera
+    thermal_frame = thermal_camera.get_image_frame_for_gui()
+    
+    # Convert the frame to a Tkinter-compatible format
+    thermal_img = Image.fromarray(cv2.cvtColor(thermal_frame, cv2.COLOR_BGR2RGB))
+    thermal_img = thermal_img.resize((425, 250))  # Resize to match the label size
+    thermalImgTk = ImageTk.PhotoImage(image=thermal_img)
+
+    # Update the label with the new image
+    ThermalCameraLabel.imgTk = thermalImgTk
+    ThermalCameraLabel.config(image=thermalImgTk)
+
+    # Schedule the next update (100ms delay)
+    ThermalCameraLabel.after(100, update_thermal_camera)
+
+# Start the thermal camera feed when the application runs
+update_thermal_camera()
 
 #thermalCameraFeed()
 
