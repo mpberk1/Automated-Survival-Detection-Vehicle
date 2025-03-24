@@ -460,6 +460,25 @@ def start_audio_stream():
 start_audio_stream()
 updateWaveform()
 
+# Update the thermal camera feed function
+def update_thermal_camera():
+    global thermalImgTk
+
+    # Get the thermal frame from the camera
+    thermal_frame = thermal_camera.get_image_frame_for_gui()
+    
+    # Convert the frame to a Tkinter-compatible format
+    thermal_img = Image.fromarray(cv2.cvtColor(thermal_frame, cv2.COLOR_BGR2RGB))
+    thermal_img = thermal_img.resize((425, 250))  # Resize to match the label size
+    thermalImgTk = ImageTk.PhotoImage(image=thermal_img)
+
+    # Update the label with the new image
+    ThermalCameraLabel.imgTk = thermalImgTk
+    ThermalCameraLabel.config(image=thermalImgTk)
+
+    # Schedule the next update (100ms delay)
+    ThermalCameraLabel.after(100, update_thermal_camera)
+
 #body temp data
 bodytempFrame = ttk.Frame(rightFrame)
 bodytempFrame.grid(row=2, column=0, padx=10, pady=10, sticky='ew')
@@ -563,25 +582,6 @@ ThermalCameraLabel.grid(row=1, column=0, sticky='news', padx=10, pady=(0,10))
 
 ThermalCameraLabel = ttk.Label(trackingTab)
 ThermalCameraLabel.grid(row=0, column=0, padx=10, pady=10)
-
-# Update the thermal camera feed function
-def update_thermal_camera():
-    global thermalImgTk
-
-    # Get the thermal frame from the camera
-    thermal_frame = thermal_camera.get_image_frame_for_gui()
-    
-    # Convert the frame to a Tkinter-compatible format
-    thermal_img = Image.fromarray(cv2.cvtColor(thermal_frame, cv2.COLOR_BGR2RGB))
-    thermal_img = thermal_img.resize((425, 250))  # Resize to match the label size
-    thermalImgTk = ImageTk.PhotoImage(image=thermal_img)
-
-    # Update the label with the new image
-    ThermalCameraLabel.imgTk = thermalImgTk
-    ThermalCameraLabel.config(image=thermalImgTk)
-
-    # Schedule the next update (100ms delay)
-    ThermalCameraLabel.after(100, update_thermal_camera)
 
 # Start the thermal camera feed when the application runs
 update_thermal_camera()
