@@ -150,7 +150,9 @@ def updateAGVLocation():
         city, state, lat, long = agvLocation
         locationDataEntry.delete(0, END)
         locationDataEntry.insert(0, f"{city}, {state}: {lat}, {long}")
-
+        pointAEntry.delete(0, END)
+        pointAEntry.insert(0, f"{lat}, {long}")
+        
     root.after(1000, updateAGVLocation)
 
 #simulate heartbeat data update
@@ -319,7 +321,7 @@ root.config(bg='black')
 notebook = ttk.Notebook(root)
 notebook.pack(fill='both', expand=True)
 
-#create tabs
+# CREATE TABS
 updatesTab = ttk.Frame(notebook)
 trackingTab = ttk.Frame(notebook)
 survivorTab = ttk.Frame(notebook)
@@ -336,7 +338,7 @@ clockLabel = ttk.Label(root, text='', font=('Helvetica', 18))
 clockLabel.place(x=850, y=0)
 updateclock()
 
-#AGV Status Updates tab
+#AGV STATUS UPDATES TAB
 #left frame
 
 #notification bar with scroll bar in left panel
@@ -489,7 +491,6 @@ locationLabel.grid(row=1, column=0, padx=10, pady=(10,0), sticky='w')
 locationDataEntry = ttk.Entry(locationFrame, width=50)
 locationDataEntry.grid(row=2, column=0, padx=10, pady=(0,5), sticky='n')
 
-updateAGVLocation()
 
 #agv manual movement arrows
 movementFrame = ttk.Frame(rightFrame)
@@ -542,7 +543,7 @@ collectDataButton.grid(row=0, column=2, padx=(10, 0), sticky='e')
 collectDataButton.config(font=('Arial', 14))
 collectDataButton.grid_configure(ipadx=5, ipady=10)
 
-#agv real-time updates tab
+#AGV REAL-TIME UPDATES TAB
 #camera frame
 CAMERA_WIDTH=450
 CAMERA_HEIGHT=300
@@ -583,7 +584,7 @@ mapCanvas.grid(row=1, column=0, rowspan=2, sticky='news', padx=10, pady=(0,10))
 
 trackingMap()
 
-#survivor detection tab
+#SURVIVOR DETECTION TAB
 #table
 tableFrame = ttk.Frame(survivorTab)
 tableFrame.pack(fill='both', expand=True, padx=10, pady=10)
@@ -606,6 +607,83 @@ dataTable.column('Body Temp °C', width=100, anchor='center')
 exportButton = ttk.Button(survivorTab, text='Export Data', command = exportData)
 exportButton.pack(pady=10)
 
+#AGV PATH TAB
+#path frame
+#pathFrame = ttk.Frame(pathTab)
+#pathFrame.pack(fill='both', expand=True, padx=10, pady=10)
+
+pathLabel = ttk.Label(pathTab, text='AGV Point A to Point B', padding=(10, 5), font=("Arial", 16, "bold"))
+pathLabel.grid(row=0, column=0, padx=5, pady=(0, 10), sticky='s')
+
+# Point A is AGV location while Point B is destination
+pointALabel = ttk.Label(pathTab, text='Current Location (latitude, longitude)', padding=(10, 5), font=("Arial", 16, "bold"))
+pointALabel.grid(row=2, column=0, padx=5, pady=(10,0), sticky='s')
+pointAEntry = ttk.Entry(pathTab, width=50)
+pointAEntry.grid(row=3, column=0, padx=5, pady=(0,5), sticky='n')
+
+pointBLabel = ttk.Label(pathTab, text='Enter Destination (latitude, longitude)', padding=(10, 5), font=("Arial", 16, "bold"))
+pointBLabel.grid(row=5, column=0, padx=5, pady=(10,0), sticky='s')
+#pathLabel.grid(row=1, column=0, padx=5, pady=(10,0), sticky='s')
+pointBEntry = ttk.Entry(pathTab, width=50)
+pointBEntry.grid(row=6, column=0, padx=5, pady=(0,5), sticky='n')
+
+distanceLabel = ttk.Label(pathTab, text='Resulting Distance in kilometers', padding=(10, 5), font=("Arial", 16, "bold"))
+distanceLabel.grid(row=7, column=0, padx=5, pady=(10,0), sticky='s')
+distanceDisplay = ttk.Entry(pathTab, width=50)
+distanceDisplay.grid(row=8, column=0, padx=5, pady=(0,5), sticky='n')
+
+directionLabel = ttk.Label(pathTab, text='Resulting Direction Clockwise From North (degrees)', padding=(10, 5), font=("Arial", 16, "bold"))
+directionLabel.grid(row=9, column=0, padx=5, pady=(10,0), sticky='s')
+directionDisplay = ttk.Entry(pathTab, width=50)
+directionDisplay.grid(row=10, column=0, padx=5, pady=(0,5), sticky='n')
+
+#Calculate Direction And Distance
+def calculateVector():
+    try:
+        pointA = pointAEntry.get().split(',')
+        pointB = pointBEntry.get().split(',')
+
+        if len(pointA) != 2 or len(pointB) != 2:
+            raise ValueError("Invalid input format. Use (latitude, longitude)")
+
+        latA, longA = map(float, pointA)
+        latB, longB = map(float, pointB)
+
+        # Calculate distance using Haversine formula
+        R = 6371  # Radius of the Earth in kilometers
+        dlat = np.radians(latB - latA)
+        dlong = np.radians(longB - longA)
+        a = np.sin(dlat / 2) ** 2 + np.cos(np.radians(latA)) * np.cos(np.radians(latB)) * np.sin(dlong / 2) ** 2
+        c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
+        distance = R * c  # Distance in kilometers
+        
+        # Calculate direction in degrees clockwise from North
+        y = np.sin(dlong) * np.cos(np.radians(latB))
+        x = np.cos(np.radians(latA)) * np.sin(np.radians(latB)) - np.sin(np.radians(latA)) * np.cos(np.radians(latB)) * np.cos(dlong)
+        direction = (np.degrees(np.arctan2(y, x)) + 360) % 360  
+
+        # Display results
+        distanceDisplay.delete(0, END)
+        distanceDisplay.insert(0, f"{distance:.4f}")
+        directionDisplay.delete(0, END)
+        directionDisplay.insert(0, f"{direction:.2f}")
+        #distanceDisplay.config(text=f"Distance: {distance:.4f} earth degrees")
+        #directionDisplay.config(text=f"Direction: {direction:.2f} degrees clockwise from North")
+        return distance, direction
+    except Exception as e:
+        distanceDisplay.delete(0, END)
+        distanceDisplay.insert(0, f"Error: {str(e)}")
+        directionDisplay.delete(0, END)
+        directionDisplay.insert(0, pointA)
+        #distanceDisplay.config(text=f"Error: {str(e)}")
+        #directionDisplay.config(text=f"Error: {str(e)}")
+
+calculateDistanceDirection = tk.Button(pathTab, text="Get Distance & Direction", command=calculateVector)
+calculateDistanceDirection.grid(row=11, column=0, padx=(10, 0), pady=(10, 0), sticky='n')
+calculateDistanceDirection.config(font=('Arial', 14))
+calculateDistanceDirection.grid_configure(ipadx=5, ipady=10)
+
+updateAGVLocation()
 
 # view notification
 def viewNotification(event):
