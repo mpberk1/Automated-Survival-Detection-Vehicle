@@ -17,13 +17,12 @@ def send_command(command):
     ser.write(bytes([command]))
     print(f"Sent command: {command}")
 
-def move_forward(duration=2):
+def move_forward():
     """Move both motors forward for a specified duration."""
     print("Moving forward...")
     send_command(FULL_FORWARD_M1)
     send_command(FULL_FORWARD_M2)
-    time.sleep(duration)
-    stop()
+    # stop()
 
 def stop():
     """Stop both motors."""
@@ -31,27 +30,27 @@ def stop():
     send_command(STOP_M1)
     send_command(STOP_M2)
 
-def move_reverse(duration=2):
+def move_reverse():
     """Move both motors in reverse for a specified duration."""
     print("Moving in reverse...")
     send_command(REVERSE_M1)
     send_command(REVERSE_M2)
-    time.sleep(duration)
-    stop()
+    # time.sleep(duration)
+    # stop()
 
-def turn_right(duration=2):
+def turn_right():
     print("Turning Right")
     send_command(FULL_FORWARD_M1)
     send_command(STOP_M2)
-    time.sleep(duration)
-    stop()
+    # time.sleep(duration)
+    # stop()
 
-def turn_left(duration=2):
+def turn_left():
     print("Turning Left")
     send_command(FULL_FORWARD_M2)
     send_command(STOP_M1)
-    time.sleep(duration)
-    stop()
+    # time.sleep(duration)
+    # stop()
 
 if __name__ == "__main__":
     try:

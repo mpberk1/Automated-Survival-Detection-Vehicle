@@ -197,21 +197,41 @@ def updateBodyTempData():
     root.after(5000, updateBodyTempData)
 
 #agv movement algorithms
+button_pressed = False
 def forward():
-    #MotorControl.move_forward(duration=2)
-    addNotification("AGV Forward Movement")
+    if button_pressed:
+        # MotorControl.move_forward(duration=2)
+        addNotification("AGV Forward Movement")
+        root.after(100,forward)
 def backward():
-    #MotorControl.move_reverse(duration=2)
-    addNotification("AGV Backward Movement")
+    if button_pressed:
+        # MotorControl.move_reverse(duration=2)
+        addNotification("AGV Backward Movement")
+        root.after(100,backward)
 def left():
-    #MotorControl.turn_left(duration=2)
-    addNotification("AGV Left Movement")
+    if button_pressed:
+        # MotorControl.turn_left(duration=2)
+        addNotification("AGV Left Movement")
+        root.after(100,left)
 def right():
-    #MotorControl.turn_right(duration=2)
-    addNotification("AGV Right Movement")
+    if button_pressed:
+        # MotorControlß.turn_right(duration=2)
+        addNotification("AGV Right Movement")
+        root.after(100,right)
 def stop():
-    #MotorControl.stop()
-    addNotification("AGV Right Movement")
+    if button_pressed:
+        # MotorControl.stop()
+        addNotification("AGV Right Movement")
+
+def on_press(direction):
+    global button_pressed
+    button_pressed = True
+    direction()
+
+def on_release():
+    global button_pressed
+    button_pressed = False
+    stop()
 
 def cameraFeed():
     global imgTk
@@ -501,19 +521,27 @@ movementLabel.grid(row=0, column=1, columnspan=3, padx=0, pady=(10, 0), sticky='
 arrowFrame = ttk.Frame(movementFrame)
 arrowFrame.grid(row=1, column=0, columnspan=3, padx=(35,0), pady=5, sticky='w')
 
-forwardButton = Button(arrowFrame, text='Forward', width=3, height=2, command=forward)
+forwardButton = Button(arrowFrame, text='Forward', width=3, height=2)
 forwardButton.grid(row=2, column=1, padx=5, pady=(0,5))
+forwardButton.bind("<ButtonPress>", lambda event: on_press(forward))
+forwardButton.bind("<ButtonRelease>", lambda event: on_release())
 
-backwardButton = Button(arrowFrame, text='Backward', width=3, height=2, command=backward)
+backwardButton = Button(arrowFrame, text='Backward', width=3, height=2)
 backwardButton.grid(row=4, column=1, padx=5, pady=5)
+backwardButton.bind("<ButtonPress>", lambda event: on_press(backward))
+backwardButton.bind("<ButtonRelease>", lambda event: on_release())
 
-leftButton = Button(arrowFrame, text='Left', width=3, height=2, command=left)
+leftButton = Button(arrowFrame, text='Left', width=3, height=2)
 leftButton.grid(row=3, column=0, padx=5, pady=5)
+leftButton.bind("<ButtonPress>", lambda event: on_press(left))
+leftButton.bind("<ButtonRelease>", lambda event: on_release())
 
-rightButton = Button(arrowFrame, text='Right', width=3, height=2, command=right)
+rightButton = Button(arrowFrame, text='Right', width=3, height=2)
 rightButton.grid(row=3, column=2, padx=5, pady=5)
+rightButton.bind("<ButtonPress>", lambda event: on_press(right))
+rightButton.bind("<ButtonRelease>", lambda event: on_release())
 
-stopButton = Button(arrowFrame, text='stop', width=3, height=2, command=stop)
+stopButton = Button(arrowFrame, text='stop', width=3, height=2)
 stopButton.grid(row=3, column=1, padx=5, pady=5)
 
 #mechanical arm
