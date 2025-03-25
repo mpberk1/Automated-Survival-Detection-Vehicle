@@ -1,0 +1,21 @@
+24-Mar-25 21:22:43 ERROR    [piThermCam.py:piThermCam:66] Error setting up thermal camera: module 'board' has no attribute 'SCL'
+24-Mar-25 21:22:43 ERROR    [piThermCam.py:piThermCam:67] Traceback (most recent call last):
+  File "/home/agv/Desktop/Automated-Survival-Detection-Vehicle/PiThermalCam/piThermCam.py", line 61, in _setup_therm_cam
+    self.i2c = busio.I2C(board.SCL, board.SDA, frequency=800000)  # setup I2C
+                         ^^^^^^^^^
+AttributeError: module 'board' has no attribute 'SCL'
+
+24-Mar-25 21:23:39 ERROR    [piThermCam.py:piThermCam:66] Error setting up thermal camera: module 'board' has no attribute 'SCL'
+24-Mar-25 21:23:39 ERROR    [piThermCam.py:piThermCam:67] Traceback (most recent call last):
+  File "/home/agv/Desktop/Automated-Survival-Detection-Vehicle/PiThermalCam/piThermCam.py", line 61, in _setup_therm_cam
+    self.i2c = busio.I2C(board.SCL, board.SDA, frequency=800000)  # setup I2C
+                         ^^^^^^^^^
+AttributeError: module 'board' has no attribute 'SCL'
+
+24-Mar-25 21:24:31 ERROR    [piThermCam.py:piThermCam:66] Error setting up thermal camera: module 'board' has no attribute 'SCL'
+24-Mar-25 21:24:31 ERROR    [piThermCam.py:piThermCam:67] Traceback (most recent call last):
+  File "/home/agv/Desktop/Automated-Survival-Detection-Vehicle/PiThermalCam/piThermCam.py", line 61, in _setup_therm_cam
+    self.i2c = busio.I2C(board.SCL, board.SDA, frequency=800000)  # setup I2C
+                         ^^^^^^^^^
+AttributeError: module 'board' has no attribute 'SCL'
+
