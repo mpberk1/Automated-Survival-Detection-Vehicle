@@ -15,13 +15,6 @@ import speech_recognition as sr
 import queue
 import sounddevice as sd 
 import importlib.util
-
-module_path = "/home/agv/Desktop/Automated-Survival-Detection-Vehicle/PiThermalCam/piThermCam.py"
-spec = importlib.util.spec_from_file_location("piThermCam", module_path)
-piThermCam = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(piThermCam)
-
-thermal_camera = piThermCam.pithermalcam()
 import random
 import sys
 import subprocess
@@ -31,15 +24,22 @@ import cv2
 import csv
 import threading
 
-#global variables
-audio_queue = queue.Queue()
-y_data = np.zeros(100)
-stream = None
-
 #Dynamically get file paths
 current_file = Path(__file__) # Path to this file
 project_root = current_file.parent.parent # Path to Automated-Survival-Detection-Vehicle
 sys.path.insert(0, str(project_root))
+
+# module_path = project_root/"PiThermalCam/piThermCam.py"
+# spec = importlib.util.spec_from_file_location("piThermCam", module_path)
+# piThermCam = importlib.util.module_from_spec(spec)
+# spec.loader.exec_module(piThermCam)
+
+# thermal_camera = piThermCam.pithermalcam()
+
+#global variables
+audio_queue = queue.Queue()
+y_data = np.zeros(100)
+stream = None
 
 # deviceDriver_dir = project_root / "DeviceDrivers"
 # sys.path.append(str(deviceDriver_dir))
@@ -482,23 +482,23 @@ start_audio_stream()
 updateWaveform()
 
 # Update the thermal camera feed function
-def update_thermal_camera():
-    global thermalImgTk
+# def update_thermal_camera():
+#     global thermalImgTk
 
-    # Get the thermal frame from the camera
-    thermal_frame = thermal_camera.get_image_frame_for_gui()
+#     # Get the thermal frame from the camera
+#     thermal_frame = thermal_camera.get_image_frame_for_gui()
     
-    # Convert the frame to a Tkinter-compatible format
-    thermal_img = Image.fromarray(cv2.cvtColor(thermal_frame, cv2.COLOR_BGR2RGB))
-    thermal_img = thermal_img.resize((425, 250))  # Resize to match the label size
-    thermalImgTk = ImageTk.PhotoImage(image=thermal_img)
+#     # Convert the frame to a Tkinter-compatible format
+#     thermal_img = Image.fromarray(cv2.cvtColor(thermal_frame, cv2.COLOR_BGR2RGB))
+#     thermal_img = thermal_img.resize((425, 250))  # Resize to match the label size
+#     thermalImgTk = ImageTk.PhotoImage(image=thermal_img)
 
-    # Update the label with the new image
-    ThermalCameraLabel.imgTk = thermalImgTk
-    ThermalCameraLabel.config(image=thermalImgTk)
+#     # Update the label with the new image
+#     ThermalCameraLabel.imgTk = thermalImgTk
+#     ThermalCameraLabel.config(image=thermalImgTk)
 
-    # Schedule the next update (100ms delay)
-    ThermalCameraLabel.after(100, update_thermal_camera)
+#     # Schedule the next update (100ms delay)
+#     ThermalCameraLabel.after(100, update_thermal_camera)
 
 #body temp data
 bodytempFrame = ttk.Frame(rightFrame)
@@ -613,7 +613,7 @@ ThermalCameraLabel = ttk.Label(trackingTab)
 ThermalCameraLabel.grid(row=0, column=0, padx=10, pady=10)
 
 # Start the thermal camera feed when the application runs
-update_thermal_camera()
+# update_thermal_camera()
 
 #thermalCameraFeed()
 
