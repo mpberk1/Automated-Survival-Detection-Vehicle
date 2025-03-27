@@ -172,26 +172,34 @@ def updateHeartbeatData():
     root.after(1000, updateHeartbeatData)
 
 #update vocal data
+speech_active = False
+def recognize_speech():
+    global speech_active
+    speech_active = True
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        recognizer.adjust_for_ambient_noise(source, duration=0.2)
+        print("Listening.")
+        try:
+            audio = recognizer.listen(source)
+            vocalValue = recognizer.recognize_google(audio)
+            root.after(0, lambda: vocalDataEntry.delete(0, tk.END))
+            root.after(0, lambda: vocalDataEntry.insert(0, vocalValue))
+
+            addNotification("Voice detected")
+                
+        except sr.UnknownValueError:
+            vocalValue = ""
+        except sr.RequestError:
+            vocalValue = "API error"
+    speech_active = False
+
 def updateVocalData():
-
-    def recognize_speech():
-        recognizer = sr.Recognizer()
-        with sr.Microphone() as source:
-            recognizer.adjust_for_ambient_noise(source, duration=0.2)
-            print("Listening.")
-            try:
-                audio = recognizer.listen(source)
-                vocalValue = recognizer.recognize_google(audio)
-                addNotification("Voice detected")
-            except sr.UnknownValueError:
-                vocalValue = ""
-            except sr.RequestError:
-                vocalValue = "API error"
-
-        root.after(0, lambda: vocalDataEntry.delete(0, END))
-        root.after(0, lambda: vocalDataEntry.insert(0, vocalValue))
     threading.Thread(target=recognize_speech, daemon=True).start()
-    root.after(3000, updateVocalData)
+
+    #     root.after(0, lambda: vocalDataEntry.delete(0, END))
+    #     root.after(0, lambda: vocalDataEntry.insert(0, vocalValue))
+    # root.after(3000, updateVocalData)
 
 # Function to handle vocal button press
 def playVocalSound():
@@ -396,16 +404,30 @@ vocalDataEntry = ttk.Entry(vocalFrame, width=10)
 vocalDataEntry.grid(row=2, column=0, padx=10, pady=(0,5), sticky='n') 
 
 #microphone buttons
+def play():
+    global speech_active
+    stop_audio_stream()
+    speech_active = True
+    #updateVocalData()
+    threading.Thread(target=recognize_speech, daemon=True).start()
+
+# Pause Button - Resume Waveform
+def pause():
+    global speech_active
+    speech_active = False
+    start_audio_stream()
+    audio_queue.queue.clear()
+    root.after(100, updateWaveform)
 
 play_icon = tk.PhotoImage(file=project_root/"GUI/play_icon.png")
-play_button = tk.Button(vocalFrame, image=play_icon, command=lambda: print("Button"),  borderwidth=0)
+play_button = tk.Button(vocalFrame, image=play_icon, command=play,  borderwidth=0)
 play_button.grid(row=3, column=0, padx=(15,0), pady=0, sticky='nw')
 
 pause_icon = tk.PhotoImage(file=project_root/"GUI/pause_icon.png")
-pause_button = tk.Button(vocalFrame, image=pause_icon, command=lambda: print("Button"),  borderwidth=0)
+pause_button = tk.Button(vocalFrame, image=pause_icon, command=pause,  borderwidth=0)
 pause_button.grid(row=3, column=0, padx=(60,0), pady=0, sticky='nw')
 
-updateVocalData()
+#updateVocalData()
 
 #send vocal response
 vocalButtonFrame = ttk.Frame(rightFrame)
@@ -444,9 +466,11 @@ def audio_callback(indata, frames, time, status):
 
 def updateWaveform():
     global y_data
-    if not audio_queue.empty():
-        audio_data = audio_queue.get()
+    if speech_active:
+        y_data = np.zeros(100)
 
+    elif not audio_queue.empty():
+        audio_data = audio_queue.get()
         audio_data = audio_data / np.max(np.abs(audio_data)) if np.max(np.abs(audio_data)) > 0 else audio_data
 
         # Clip or pad data to exactly 100 samples
@@ -457,11 +481,16 @@ def updateWaveform():
     line.set_ydata(y_data)
     canvas.draw()
     
-    root.after(50, updateWaveform)
+    if not speech_active:
+        root.after(50, updateWaveform)
 
 def start_audio_stream():
     global stream
     try:
+        if stream is not None:
+            stream.stop()
+            stream.close()
+
         stream = sd.InputStream(callback=audio_callback, channels=1, samplerate=44100, blocksize=100)
         stream.start()
         print("Audio stream started")
@@ -469,6 +498,14 @@ def start_audio_stream():
     except Exception as e:
         print(f"Failed to stream audio: {e}")
         addNotification(f"Audio Stream Error: {e}",f"Audio Stream Error: {e}")
+
+def stop_audio_stream():
+    global stream
+    if stream:
+        stream.stop()
+        stream.close()
+        stream = None
+        print("Audio stream stopped")
 
 # line, = ax.plot(np.arange(100), y_data, lw=1, color='black')
 # stream = sd.InputStream(callback=audio_callback, channels=1, samplerate=44100, blocksize=100)
