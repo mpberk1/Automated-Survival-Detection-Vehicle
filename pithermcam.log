@@ -19,3 +19,58 @@ AttributeError: module 'board' has no attribute 'SCL'
                          ^^^^^^^^^
 AttributeError: module 'board' has no attribute 'SCL'
 
+01-Apr-25 19:24:09 ERROR    [piThermCam.py:piThermCam:271] Error getting image frame for GUI: OpenCV(4.6.0) /io/opencv/modules/imgproc/src/colormap.cpp:736: error: (-5:Bad argument) cv::ColorMap only supports source images of type CV_8UC1 or CV_8UC3 in function 'operator()'
+
+01-Apr-25 19:24:09 ERROR    [piThermCam.py:piThermCam:272] Traceback (most recent call last):
+  File "/home/agv/Desktop/Automated-Survival-Detection-Vehicle/PiThermalCam/piThermCam.py", line 264, in get_image_frame_for_gui
+    self._process_raw_image()
+  File "/home/agv/Desktop/Automated-Survival-Detection-Vehicle/PiThermalCam/piThermCam.py", line 122, in _process_raw_image
+    self._image = cv2.applyColorMap(self._raw_image, cmapy.cmap(self._colormap_list[self._colormap_index]))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cv2.error: OpenCV(4.6.0) /io/opencv/modules/imgproc/src/colormap.cpp:736: error: (-5:Bad argument) cv::ColorMap only supports source images of type CV_8UC1 or CV_8UC3 in function 'operator()'
+
+
+01-Apr-25 19:34:10 ERROR    [piThermCam.py:piThermCam:271] Error getting image frame for GUI: OpenCV(4.6.0) /io/opencv/modules/imgproc/src/colormap.cpp:736: error: (-5:Bad argument) cv::ColorMap only supports source images of type CV_8UC1 or CV_8UC3 in function 'operator()'
+
+01-Apr-25 19:34:10 ERROR    [piThermCam.py:piThermCam:272] Traceback (most recent call last):
+  File "/home/agv/Desktop/Automated-Survival-Detection-Vehicle/PiThermalCam/piThermCam.py", line 264, in get_image_frame_for_gui
+    self._process_raw_image()
+  File "/home/agv/Desktop/Automated-Survival-Detection-Vehicle/PiThermalCam/piThermCam.py", line 122, in _process_raw_image
+    self._image = cv2.applyColorMap(self._raw_image, cmapy.cmap(self._colormap_list[self._colormap_index]))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cv2.error: OpenCV(4.6.0) /io/opencv/modules/imgproc/src/colormap.cpp:736: error: (-5:Bad argument) cv::ColorMap only supports source images of type CV_8UC1 or CV_8UC3 in function 'operator()'
+
+
+01-Apr-25 19:38:22 ERROR    [piThermCam.py:piThermCam:271] Error getting image frame for GUI: OpenCV(4.6.0) /io/opencv/modules/imgproc/src/colormap.cpp:736: error: (-5:Bad argument) cv::ColorMap only supports source images of type CV_8UC1 or CV_8UC3 in function 'operator()'
+
+01-Apr-25 19:38:22 ERROR    [piThermCam.py:piThermCam:272] Traceback (most recent call last):
+  File "/home/agv/Desktop/Automated-Survival-Detection-Vehicle/PiThermalCam/piThermCam.py", line 264, in get_image_frame_for_gui
+    self._process_raw_image()
+  File "/home/agv/Desktop/Automated-Survival-Detection-Vehicle/PiThermalCam/piThermCam.py", line 122, in _process_raw_image
+    self._image = cv2.applyColorMap(self._raw_image, cmapy.cmap(self._colormap_list[self._colormap_index]))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cv2.error: OpenCV(4.6.0) /io/opencv/modules/imgproc/src/colormap.cpp:736: error: (-5:Bad argument) cv::ColorMap only supports source images of type CV_8UC1 or CV_8UC3 in function 'operator()'
+
+
+01-Apr-25 19:38:22 ERROR    [piThermCam.py:piThermCam:271] Error getting image frame for GUI: OpenCV(4.6.0) /io/opencv/modules/imgproc/src/colormap.cpp:736: error: (-5:Bad argument) cv::ColorMap only supports source images of type CV_8UC1 or CV_8UC3 in function 'operator()'
+
+01-Apr-25 19:38:22 ERROR    [piThermCam.py:piThermCam:272] Traceback (most recent call last):
+  File "/home/agv/Desktop/Automated-Survival-Detection-Vehicle/PiThermalCam/piThermCam.py", line 264, in get_image_frame_for_gui
+    self._process_raw_image()
+  File "/home/agv/Desktop/Automated-Survival-Detection-Vehicle/PiThermalCam/piThermCam.py", line 122, in _process_raw_image
+    self._image = cv2.applyColorMap(self._raw_image, cmapy.cmap(self._colormap_list[self._colormap_index]))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cv2.error: OpenCV(4.6.0) /io/opencv/modules/imgproc/src/colormap.cpp:736: error: (-5:Bad argument) cv::ColorMap only supports source images of type CV_8UC1 or CV_8UC3 in function 'operator()'
+
+
+01-Apr-25 19:38:22 ERROR    [piThermCam.py:piThermCam:271] Error getting image frame for GUI: OpenCV(4.6.0) /io/opencv/modules/imgproc/src/colormap.cpp:736: error: (-5:Bad argument) cv::ColorMap only supports source images of type CV_8UC1 or CV_8UC3 in function 'operator()'
+
+01-Apr-25 19:38:22 ERROR    [piThermCam.py:piThermCam:272] Traceback (most recent call last):
+  File "/home/agv/Desktop/Automated-Survival-Detection-Vehicle/PiThermalCam/piThermCam.py", line 264, in get_image_frame_for_gui
+    self._process_raw_image()
+  File "/home/agv/Desktop/Automated-Survival-Detection-Vehicle/PiThermalCam/piThermCam.py", line 122, in _process_raw_image
+    self._image = cv2.applyColorMap(self._raw_image, cmapy.cmap(self._colormap_list[self._colormap_index]))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cv2.error: OpenCV(4.6.0) /io/opencv/modules/imgproc/src/colormap.cpp:736: error: (-5:Bad argument) cv::ColorMap only supports source images of type CV_8UC1 or CV_8UC3 in function 'operator()'
+
+

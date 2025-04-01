@@ -29,12 +29,12 @@ current_file = Path(__file__) # Path to this file
 project_root = current_file.parent.parent # Path to Automated-Survival-Detection-Vehicle
 sys.path.insert(0, str(project_root))
 
-# module_path = project_root/"PiThermalCam/piThermCam.py"
-# spec = importlib.util.spec_from_file_location("piThermCam", module_path)
-# piThermCam = importlib.util.module_from_spec(spec)
-# spec.loader.exec_module(piThermCam)
+module_path = project_root/"PiThermalCam/piThermCam.py"
+spec = importlib.util.spec_from_file_location("piThermCam", module_path)
+piThermCam = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(piThermCam)
 
-# thermal_camera = piThermCam.pithermalcam()
+thermal_camera = piThermCam.pithermalcam()
 
 #global variables
 audio_queue = queue.Queue()
@@ -346,10 +346,12 @@ updatesTab = ttk.Frame(notebook)
 trackingTab = ttk.Frame(notebook)
 survivorTab = ttk.Frame(notebook)
 pathTab = ttk.Frame(notebook)
+thermalCamTab = ttk.Frame(notebook)
 
 #add tabs to notebook
 notebook.add(updatesTab, text='AGV Status Updates')
 notebook.add(trackingTab, text='Real-Time AGV Tracking')
+notebook.add(thermalCamTab, text='Thermal Camera')
 notebook.add(survivorTab, text='Real-Time Survivor Detection Status')
 notebook.add(pathTab, text='AGV Path')
 
@@ -519,23 +521,23 @@ start_audio_stream()
 updateWaveform()
 
 # Update the thermal camera feed function
-# def update_thermal_camera():
-#     global thermalImgTk
+def update_thermal_camera():
+    global thermalImgTk
 
-#     # Get the thermal frame from the camera
-#     thermal_frame = thermal_camera.get_image_frame_for_gui()
+    # Get the thermal frame from the camera
+    thermal_frame = thermal_camera.get_image_frame_for_gui()
     
-#     # Convert the frame to a Tkinter-compatible format
-#     thermal_img = Image.fromarray(cv2.cvtColor(thermal_frame, cv2.COLOR_BGR2RGB))
-#     thermal_img = thermal_img.resize((425, 250))  # Resize to match the label size
-#     thermalImgTk = ImageTk.PhotoImage(image=thermal_img)
+    # Convert the frame to a Tkinter-compatible format
+    thermal_img = Image.fromarray(cv2.cvtColor(thermal_frame, cv2.COLOR_BGR2RGB))
+    thermal_img = thermal_img.resize((1920, 1080))  # Resize to match the label size
+    thermalImgTk = ImageTk.PhotoImage(image=thermal_img)
 
-#     # Update the label with the new image
-#     ThermalCameraLabel.imgTk = thermalImgTk
-#     ThermalCameraLabel.config(image=thermalImgTk)
+    # Update the label with the new image
+    ThermalCameraLabel.imgTk = thermalImgTk
+    ThermalCameraLabel.config(image=thermalImgTk)
 
-#     # Schedule the next update (100ms delay)
-#     ThermalCameraLabel.after(100, update_thermal_camera)
+    # Schedule the next update (100ms delay)
+    ThermalCameraLabel.after(100, update_thermal_camera)
 
 #body temp data
 bodytempFrame = ttk.Frame(rightFrame)
@@ -636,21 +638,6 @@ cameraLabel.grid(row=1, column=0, sticky='nsew', padx=10, pady=(0,10))
 camera = cv2.VideoCapture(0)
 cameraFeed()
 
-#thermal camera frame
-ThermalCameraFrame = ttk.Frame(trackingTab, width=10, height=10)
-ThermalCameraFrame.grid(row=1, column=0, padx=0, pady=10, sticky='news')
-
-ThermalCameraTextLabel = ttk.Label(ThermalCameraFrame, text='AGV Thermal Camera', padding=(10, 5), font=("Arial", 16, "bold"))
-ThermalCameraTextLabel.grid(row=0, column=0, sticky='nsew')
-
-ThermalCameraLabel = Label(ThermalCameraFrame, text='OFFLINE', fg='red', bg='black', width=50, height=18)
-ThermalCameraLabel.grid(row=1, column=0, sticky='news', padx=10, pady=(0,10))
-
-ThermalCameraLabel = ttk.Label(trackingTab)
-ThermalCameraLabel.grid(row=0, column=0, padx=10, pady=10)
-
-# Start the thermal camera feed when the application runs
-# update_thermal_camera()
 
 #thermalCameraFeed()
 
@@ -810,6 +797,16 @@ trackingTab.grid_rowconfigure(0, weight=1)
 trackingTab.grid_rowconfigure(1, weight=1)
 trackingTab.grid_columnconfigure(0, weight=1)
 trackingTab.grid_columnconfigure(1, weight=1)
+
+
+#thermal camera frame
+ThermalCameraFrame = ttk.Frame(thermalCamTab, width=10, height=10)
+ThermalCameraFrame.grid(row=1, column=0, padx=0, pady=10, sticky='news')
+ThermalCameraLabel = ttk.Label(thermalCamTab)
+ThermalCameraLabel.grid(row=0, column=0, padx=10, pady=10)
+
+# Start the thermal camera feed when the application runs
+update_thermal_camera()
 
 def main():
     root.mainloop()
