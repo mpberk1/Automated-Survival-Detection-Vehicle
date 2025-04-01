@@ -1,0 +1,81 @@
+Engineering Notebook
+Alessia Tripaldelli
+Senior Design- Communication Team
+Fall 2024
+
+Sprint 1: 
+  Week 1
+    September 17th: Research on Literature (find papers to cite for our potential paper)
+    September 18th: Research on what rovers we could use to detect enemies and friends
+    September 19th: Proposal Draft (objective)
+    September 20th: Proposal Draft (Communication Requirements for two semesters)
+    September 21th: Proposal Draft (Proposed solution)
+  Week 2
+    October 23rd: Proposal (wrote communication part and schedule plan for this and next semester with relative requirements) 
+    October 24th: Proposal (final edits on proposed solution before submission) 
+    October 25th: Update scrum for all the team and report to scrum master 
+    October 26th: Backlog item list for sprint 2
+    October 26th: Final draft of proposal and submission
+
+Sprint 2: 
+  Week 1
+    October 1st: Research on how to use the Wi-Fi module on raspberry pi 5 for communication
+    October 3rd: Help with powerpoint slides (add simulation details and edit  
+    October 4th: Research on the best modulation scheme to use based on how far the ground station has to be
+    October 5th: Update scrum and report to scrum master 
+  Week 2
+    October 8th: Prepare requirements for sprint 3
+    October 9th: Parts to order for new requirements of the project
+    October 10th: Decide new requirements 
+
+Sprint 3: 
+  Week 1
+    Octber 15th: Proposal: Rewrite the proposed solution
+    October 16th: Proposal Communication Part: Rewrite communication part and requirements 
+    October 16th: Started Backlog items for sprint 4
+    October 16th: Update scrum 
+    Fall break from 17th to 20th: no relevant work, just scrum update for the team 
+  Week 2
+    October 21st: Write Agile Process Check 1
+    October 22nd: Include tables and specifications on backlog items, task assignments, weight assignments, and teammates’ effort level
+    October 23rd: Requirements for new project scope
+    October 23rd: Start SRS
+    October 24th: Organization of GitHub
+
+Sprint 4:
+  Week 1
+    October 29th: SRS: Intro section Draft 
+    October 30th: SRS: Help with section 2 
+    October 31th: SDD: Set-up of the document and start drafting  intro section
+    November 1st: Update scrum for all the communication team
+  Week 2
+    November 4th: SDD: Sections 1.1, 1.2, 1.3, 1.4 of intro finalized
+    November 5th: SDD: Finish all section 1 of the document and update scrum with progress of the communication team
+    November 6th: work on presentation, make the slides less textual and more visual
+    November 7th: team meeting to decide how to move forward, how to structure the presentation and who will present 
+
+Sprint 5: 
+  Week 1
+    November 12th: prepared all backlog items to start the sprint, requirements, and testing scenarios
+    November 13th: finish section 1 of SDD and help on section 2 (system architecture)
+    November 14th: start working on poster (helping Rachel), made a ppt slide that will include visual of the robot, abstract, project scope, purpose, and description
+    November 16th: Update scrum with team efforts and progress
+ Week 2: 
+    November 18th: work more on SDD to prepare for submission
+    November 19th: make sure that scrum reflect team efforts and progress for agile check
+    November 20th: review SRS (adjust some communication requirements)
+    November 21st: close sprint, help on editing poster, perform LoRa simulation on MATLAB to get a graph to add on the poster 
+
+Sprint 6: 
+  Week 1
+    November 26th: review SRS (in particular I put the comments provide from TA and fixed some requirements)
+    November 27th: final review SRS (prepare for submission)
+    November 28th: start working on test plan, just general structure 
+    November 29th/30th/Dec. 1st: no work was performed due to Thanksgiving break
+    December 2nd: Poster final review (fix a typo), video recording for communication part, edit the communication video, create a google drive containing all videos and documents 
+    December 3rd: work on test plan (finished all part 1 of the document)
+    December 4th: finalize test plan (make sure communication requirements all have test cases)
+    December 5th: Poster presentation, test plan submission
+
+
+

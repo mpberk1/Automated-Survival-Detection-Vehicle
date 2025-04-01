@@ -86,5 +86,6 @@ passwordField.bind('<FocusOut>', resetPlaceholder)
 
 loginButton = ttk.Button(frame, text='Login', command=login)
 loginButton.grid(row=2, column=0, columnspan=1, padx=10, pady=10)
+root.bind('<Return>', lambda event: login())
 
 root.mainloop()
