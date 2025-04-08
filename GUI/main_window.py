@@ -1,6 +1,11 @@
 import tkinter as tk
-from tkinter import *
-from tkinter import ttk
+import ttkbootstrap as ttkb
+from tkinter import Canvas
+from ttkbootstrap.constants import *
+from ttkbootstrap.widgets import Notebook, Entry, Label, Button, Frame, Scrollbar, Treeview
+from ttkbootstrap import Style
+from ttkbootstrap.scrolled import ScrolledText
+from tkinter import Listbox, RIGHT, LEFT, Y, BOTH, VERTICAL, FLAT 
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from PIL import Image, ImageTk
@@ -9,7 +14,6 @@ from tkinter import filedialog
 from pathlib import Path
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-#import pithermalcam as ptc
 
 import speech_recognition as sr
 import queue
@@ -29,12 +33,12 @@ current_file = Path(__file__) # Path to this file
 project_root = current_file.parent.parent # Path to Automated-Survival-Detection-Vehicle
 sys.path.insert(0, str(project_root))
 
-module_path = project_root/"PiThermalCam/piThermCam.py"
-spec = importlib.util.spec_from_file_location("piThermCam", module_path)
-piThermCam = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(piThermCam)
+# module_path = project_root/"PiThermalCam/piThermCam.py"
+# spec = importlib.util.spec_from_file_location("piThermCam", module_path)
+# piThermCam = importlib.util.module_from_spec(spec)
+# spec.loader.exec_module(piThermCam)
 
-thermal_camera = piThermCam.pithermalcam()
+# thermal_camera = piThermCam.pithermalcam()
 
 #global variables
 audio_queue = queue.Queue()
@@ -86,12 +90,10 @@ def trackingMap():
     agv_y = canvas_height // 2
 
     # Draw AGV position in center
-    mapCanvas.create_oval(agv_x - 10, agv_y - 10, agv_x + 10, agv_y + 10, 
-                          fill="white", outline="blue", width=3, tags="AGV")
+    mapCanvas.create_oval(agv_x - 10, agv_y - 10, agv_x + 10, agv_y + 10, fill="white", outline="blue", width=3, tags="AGV")
 
     # Display AGV coordinates
-    mapCanvas.create_text(agv_x, agv_y - 15, text=f"({agv_lat:.4f}, {agv_long:.4f})", 
-                          fill="white", font=("Helvetica", 14, "bold"))
+    mapCanvas.create_text(agv_x, agv_y - 15, text=f"({agv_lat:.4f}, {agv_long:.4f})", fill="white", font=("Helvetica", 14, "bold"))
 
     # Label AGV
     mapCanvas.create_text(agv_x, agv_y + 15, text="AGV", fill="white", font=("Helvetica", 14, "bold"))
@@ -111,8 +113,7 @@ def trackingMap():
         survivor_x = agv_x + offset_x
         survivor_y = agv_y + offset_y
 
-        mapCanvas.create_oval(survivor_x - 10, survivor_y - 10, survivor_x + 10, survivor_y + 10, 
-                              fill="red", outline="white", width=2)
+        mapCanvas.create_oval(survivor_x - 10, survivor_y - 10, survivor_x + 10, survivor_y + 10, fill="red", outline="white", width=2)
 
     root.after(1000, trackingMap)
 
@@ -140,12 +141,23 @@ def viewNotification(event):
         notificationWindow.pack(padx=20, pady=20)
 
 #simulate battery level changing
+batteryLevel = 100
 def updateBatteryLevel():
-    batteryValue = random.randint(0,100)
-    batteryProgressBar['value'] = batteryValue
-    batteryLabel.config(text=f'Battery: {batteryValue}%')
+    global batteryLevel
+    if batteryLevel > 0:
+        batteryLevel -= 1
+    batteryProgressBar['value'] = batteryLevel
+    batteryLabel.config(text=f'Battery: {batteryLevel}%')
+    if batteryLevel <= 10:
+        batteryProgressBar.configure(bootstyle="danger")
+    elif batteryLevel < 50:
+        batteryProgressBar.configure(bootstyle="warning")
+    else:
+        batteryProgressBar.configure(bootstyle="info")
+    batteryProgressBar['value'] = batteryLevel
 
-    root.after(5000, updateBatteryLevel)
+    #update every 2 minutes
+    root.after(240000, updateBatteryLevel)
 
 #simulate heartbeat data update
 
@@ -196,10 +208,6 @@ def recognize_speech():
 
 def updateVocalData():
     threading.Thread(target=recognize_speech, daemon=True).start()
-
-    #     root.after(0, lambda: vocalDataEntry.delete(0, END))
-    #     root.after(0, lambda: vocalDataEntry.insert(0, vocalValue))
-    # root.after(3000, updateVocalData)
 
 # Function to handle vocal button press
 def playVocalSound():
@@ -260,14 +268,29 @@ def cameraFeed():
     global imgTk
     ret, frame = camera.read()
     if ret:
+        label_width = cameraLabel.winfo_width()
+        label_height = cameraLabel.winfo_height()
+
+        if label_width > 1 and label_height > 1:
+            frame_height, frame_width = frame.shape[:2]
+            aspect_ratio = frame_width / frame_height
+
+            if label_width / aspect_ratio <= label_height:
+                new_width = label_width
+                new_height = int(label_width / aspect_ratio)
+            else:
+                new_height = label_height
+                new_width = int(label_height * aspect_ratio)
+
+            frame = cv2.resize(frame, (new_width, new_height))
+
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        frame = cv2.resize(frame, (CAMERA_WIDTH, CAMERA_HEIGHT))
         img = Image.fromarray(frame)
         imgTk = ImageTk.PhotoImage(image=img)
         cameraLabel.imgTk = imgTk
         cameraLabel.config(image=imgTk)
-    cameraLabel.after(10, cameraFeed)
 
+    cameraLabel.after(10, cameraFeed)
 
 #logging data from sensors
 #validate input
@@ -283,7 +306,7 @@ def validate_input(value, expected_type):
 #log data
 notificationDetails = {}
 def logSensorData():
-    global lat, long
+    global lat, long, collectDataButton
     try:
         heartbeat = validate_input(heartbeatDataEntry.get(), "int")
         vocal = vocalDataEntry.get()
@@ -301,7 +324,10 @@ def logSensorData():
         location = f"{lat}, {long}"
 
         try:
-            dataTable.insert('', 'end', values=(location, currentTime, heartbeat, vocal, bodyTemp))
+            row_count = len(dataTable.get_children())
+            tag = 'evenrow' if row_count % 2 == 0 else 'oddrow'
+            dataTable.insert('', 'end', values=(location, currentTime, heartbeat, vocal, bodyTemp), tags=(tag,))
+
         except Exception as e:
             print(f"Error: {e}")
             addNotification(f"Error: {e}",f"Error: {e}")
@@ -309,9 +335,14 @@ def logSensorData():
         shortMessage = "Data logged successfully"        
         fullMessage = f"Data logged successfully at {currentTime} - {heartbeat} bpm, {vocal}, {bodyTemp} °C"
         addNotification(shortMessage,fullMessage)
+
+        collectDataButton.config(bootstyle="success")
+        root.after(1000, lambda: collectDataButton.config(bootstyle="primary"))
         
     except Exception as e:
         addNotification('Error in logging data', f"Error: {str(e)}")
+        collectDataButton.config(bootstyle="danger")
+        root.after(1000, lambda: collectDataButton.config(bootstyle="primary"))
 
 def exportData():
     filePath = filedialog.asksaveasfilename(defaultextension='.csv', filetypes=[('CSV files', '*.csv')])
@@ -329,24 +360,23 @@ def exportData():
         addNotification('Data Exported successfully','Data Exported successfully')
     
 #main window
-root = Tk()
+root = ttkb.Window(themename='darkly')
+root.state('zoomed')
 root.title('AGV-HSD')
-root.geometry('1000x600')
+# root.geometry('1000x600')
 root.minsize(1050, 700)
-# root.maxsize(1050, 800)
 root.resizable(True, True)
-root.config(bg='black')
 
 #tabs frame
-notebook = ttk.Notebook(root)
+notebook = Notebook()
 notebook.pack(fill='both', expand=True)
 
 # CREATE TABS
-updatesTab = ttk.Frame(notebook)
-trackingTab = ttk.Frame(notebook)
-survivorTab = ttk.Frame(notebook)
-pathTab = ttk.Frame(notebook)
-thermalCamTab = ttk.Frame(notebook)
+updatesTab = Frame(notebook, style="DarkTab.TFrame")
+trackingTab = Frame(notebook, style="DarkTab.TFrame")
+survivorTab = Frame(notebook, style="DarkTab.TFrame")
+pathTab = Frame(notebook, style="DarkTab.TFrame")
+thermalCamTab = Frame(notebook, style="DarkTab.TFrame")
 
 #add tabs to notebook
 notebook.add(updatesTab, text='AGV Status Updates')
@@ -355,62 +385,143 @@ notebook.add(thermalCamTab, text='Thermal Camera')
 notebook.add(survivorTab, text='Real-Time Survivor Detection Status')
 notebook.add(pathTab, text='AGV Path')
 
+#Global Styling
+style = Style()
+style.configure("DarkTab.TFrame", background="black")
+
+style.configure("TNotebook.Tab", 
+    font=("Segoe UI", 15, "bold"),
+    padding=[12, 6],
+    background="#222222",
+    foreground="white"      
+)
+style.map("TNotebook.Tab",
+    foreground=[
+        ("selected", "white"),
+        ("!selected", "#a0a0a0")],
+        background=[
+        ("selected", "#0a4a74"),
+        ("!selected", "#2f323b")]
+)
+style.configure("Custom.TEntry",
+    fieldbackground="#2f2f2f",
+    foreground="white",
+    bordercolor="#395d84",
+    lightcolor="#395d84", 
+    darkcolor="#395d84",  
+    borderwidth=0.2,
+    relief="solid",
+    padding=5,
+    font=("Segoe UI", 11)
+)
+
+#label styling
+style.configure(
+    "TLabel",
+    background="#444444",
+    foreground="white",
+    font=('Segoe UI', 12))
+#frame styling
+style.configure(
+    "TFrame",
+    background="#145a8d")
+
 #clock label
-clockLabel = ttk.Label(root, text='', font=('Helvetica', 18))
-clockLabel.place(x=850, y=0)
+clockLabel = Label(root, text='', font=('Helvetica', 18), bootstyle="light")
+clockLabel.place(relx=1.0, rely=0.0, anchor='ne', x=-20, y=5)
 updateclock()
 
 #AGV STATUS UPDATES TAB
 #left frame
-
 #notification bar with scroll bar in left panel
-leftFrame = ttk.Frame(updatesTab)
-leftFrame.grid(row=0, column=0, sticky='nsew', padx=10, pady=10)
+leftFrame = Frame(updatesTab, padding=10, bootstyle="dark")
+leftFrame.grid(row=0, column=0, sticky='nsew')
+leftFrame.grid_propagate(False)
 
-notificationsLabel = ttk.Label(leftFrame, text='Notifications', font=('Helvetica', 14, 'bold'))
-notificationsLabel.pack(pady=(0, 5), anchor='w')
+notificationsLabel = Label(
+    leftFrame,
+    text='Notifications',
+    width=20,
+    font=('Helvetica', 18, 'bold'),
+    background='#303031')
+notificationsLabel.pack(pady=(10, 5), anchor='w')
 
-scrollbar = ttk.Scrollbar(leftFrame, orient=VERTICAL)
+scrollbar = Scrollbar(leftFrame, orient=VERTICAL, bootstyle="secondary-round")
 scrollbar.pack(side=RIGHT, fill=Y)
 
 #list of notifications in leftFrame
-notificationList = Listbox(leftFrame, yscrollcommand=scrollbar.set, width=25, height=15)
+notificationList = Listbox(
+    leftFrame,
+    yscrollcommand=scrollbar.set,
+    width=30,
+    height=15,
+    bg='#f8f8f2',
+    fg='black',
+    font=('Consolas', 14),
+    bd=0,
+    highlightthickness=1,
+    highlightbackground='#444',
+    selectbackground='#cce5ff',
+    selectforeground='black',
+    relief=FLAT )
 notificationList.pack(side=LEFT, fill=BOTH, expand=True)
-
 scrollbar.config(command=notificationList.yview)
 
 #right frame
 #data section
-rightFrame = ttk.Frame(updatesTab)
-rightFrame.grid(row=0, column=1, sticky='nsew', padx=10, pady=0)
+rightFrame = Frame(updatesTab, padding=10, bootstyle="dark")
+rightFrame.grid(row=0, column=1, sticky='nsew', pady=(40,0))
 
-heartbeatFrame = ttk.Frame(rightFrame)
+heartbeatFrame = Frame(rightFrame, padding=20, bootstyle="secondary")
 heartbeatFrame.grid(row=1, column=0, padx=10, pady=10, sticky='ew')
 
-heartbeatLabel = ttk.Label(heartbeatFrame, text='Heartbeat Data')
-heartbeatLabel.grid(row=1, column=0, padx=5, pady=(10,0), sticky='s')
+heartbeatLabel = Label(
+    heartbeatFrame,
+    text=' Heartbeat Data',
+    font=('Segoe UI', 18, 'bold'))
+heartbeatLabel.grid(row=1, column=0, padx=5, pady=(10, 0), sticky='sw')
 
-heartbeatDataEntry = ttk.Entry(heartbeatFrame, width=10)
-heartbeatDataEntry.grid(row=2, column=0, padx=10, pady=(0,5), sticky='n')
+heartbeatDataEntry = Entry(
+    heartbeatFrame,
+    width=25,
+    font=('Segoe UI', 16),
+    style="Custom.TEntry")
+heartbeatDataEntry.grid(row=2, column=0, padx=10, pady=(0, 5), sticky='n')
 
 updateHeartbeatData()
 
 #vocal data
-vocalFrame = ttk.Frame(rightFrame)
-vocalFrame.grid(row=3, column=0, padx=10, pady=(0,10), sticky='ew')
+vocalFrame = Frame(rightFrame, padding=20, bootstyle="secondary")
+vocalFrame.grid(row=3, column=0, padx=10, pady=10, sticky='ew')
 
-vocalLabel = ttk.Label(vocalFrame, text='Vocal Response')
-vocalLabel.grid(row=1, column=0, padx=5, pady=(10,0), sticky='s')
+vocalLabel = Label(
+    vocalFrame,
+    text=' Vocal Response',
+    font=('Segoe UI', 18, 'bold'))
+vocalLabel.grid(row=0, column=0, padx=5, pady=(10, 0), sticky='sw')
 
-vocalDataEntry = ttk.Entry(vocalFrame, width=10)
-vocalDataEntry.grid(row=2, column=0, padx=10, pady=(0,5), sticky='n') 
+sendVocalsButton = Button(
+    vocalFrame,
+    text="Send Vocal Data",
+    command=playVocalSound,
+    bootstyle="primary" )
+sendVocalsButton.grid(row=2, column=1, padx=(5,10), pady=0, sticky='e')
+
+vocalDataEntry = Entry(
+    vocalFrame,
+    width=25,
+    font=('Segoe UI', 16),
+    style="Custom.TEntry")
+vocalDataEntry.grid(row=2, column=0, padx=(10,5), pady=5, sticky='nesw')
 
 #microphone buttons
+play_icon = tk.PhotoImage(file=project_root/"GUI/play_icon.png")
+pause_icon = tk.PhotoImage(file=project_root/"GUI/pause_icon.png")
+
 def play():
     global speech_active
     stop_audio_stream()
     speech_active = True
-    #updateVocalData()
     threading.Thread(target=recognize_speech, daemon=True).start()
 
 # Pause Button - Resume Waveform
@@ -421,37 +532,44 @@ def pause():
     audio_queue.queue.clear()
     root.after(100, updateWaveform)
 
-play_icon = tk.PhotoImage(file=project_root/"GUI/play_icon.png")
-play_button = tk.Button(vocalFrame, image=play_icon, command=play,  borderwidth=0)
-play_button.grid(row=3, column=0, padx=(15,0), pady=0, sticky='nw')
+play_button = Button(
+    vocalFrame,
+    image=play_icon,
+    command=play,
+    bootstyle='secondary')
+play_button.image = play_icon
+play_button.grid(row=3, column=0, padx=5, pady=0, sticky='nw')
 
-pause_icon = tk.PhotoImage(file=project_root/"GUI/pause_icon.png")
-pause_button = tk.Button(vocalFrame, image=pause_icon, command=pause,  borderwidth=0)
-pause_button.grid(row=3, column=0, padx=(60,0), pady=0, sticky='nw')
-
-#updateVocalData()
-
-#send vocal response
-vocalButtonFrame = ttk.Frame(rightFrame)
-vocalButtonFrame.grid(row=3, column=0, padx=(100,10), pady=(40,10), sticky='ns')
-
-sendVocalsButton = ttk.Button(vocalButtonFrame, text="Send Vocal Data", command=playVocalSound)
-sendVocalsButton.grid(row=0, column=0, padx=(25,5), pady=(0,10), sticky='n')
+pause_button = Button(
+    vocalFrame,
+    image=pause_icon,
+    command=pause,
+    bootstyle="secondary")
+pause_button.image = pause_icon
+pause_button.grid(row=3, column=0, padx=(60, 0), pady=0, sticky='nw')
 
 #waveform
-waveformFrame = ttk.Frame(rightFrame)
-waveformFrame.grid(row=4, column=0, columnspan=2, padx=10, pady=10, sticky='w')
+waveformFrame = Frame(rightFrame, padding=20, bootstyle="secondary")
+waveformFrame.grid(row=4, column=0, columnspan=2, padx=10, pady=10, sticky='ew')
 
-waveFormLabel = ttk.Label(waveformFrame, text='Vocal Waves')
+waveFormLabel = Label(
+    waveformFrame,
+    text='Vocal Waves',
+    font=('Segoe UI', 18, 'bold')
+)
 waveFormLabel.grid(row=0, column=0, padx=5, pady=5, sticky='w')
 
-fig = Figure(figsize=(3.5, 0.75), dpi=100)
+fig = Figure(figsize=(3.5, 0.75), dpi=100, facecolor="white")
 ax = fig.add_subplot(111)
-ax.set_ylim(-1, 1)
-ax.set_xlim(0, 100)
+ax.set_facecolor("white")
+for spine in ax.spines.values():
+    spine.set_visible(False)
 ax.set_xticks([])
 ax.set_yticks([])
-line, = ax.plot(np.arange(100), y_data, lw=1, color='black')
+ax.tick_params(left=False, bottom=False)
+ax.set_ylim(-1.3, 1.3)
+ax.set_xlim(-8, 108)
+line, = ax.plot(np.arange(100), y_data, lw=2, color="#3597d8") 
 
 canvas = FigureCanvasTkAgg(fig, master=waveformFrame)
 canvas.get_tk_widget().grid(row=1, column=0, padx=5, pady=5, sticky='ew')
@@ -462,7 +580,6 @@ def audio_callback(indata, frames, time, status):
         addNotification(f"Audio Status: {status}",f"Audio Status: {status}")
     
     audio_data = indata[:,0]
-    # global audio_queue
     audio_queue.put(audio_data)
     # print(f"Audio Data Shape: {indata.shape}")
 
@@ -509,156 +626,238 @@ def stop_audio_stream():
         stream = None
         print("Audio stream stopped")
 
-# line, = ax.plot(np.arange(100), y_data, lw=1, color='black')
-# stream = sd.InputStream(callback=audio_callback, channels=1, samplerate=44100, blocksize=100)
+def start_audio_and_waveform():
+    start_audio_stream()
+    updateWaveform()
 
-# try:
-#     stream.start()
-# except Exception as e:
-#     print(f"Failed to stream audio: {e}")
-
-start_audio_stream()
-updateWaveform()
+# Delay stream start to ensure canvas is initialized
+root.after(100, start_audio_and_waveform)
 
 # Update the thermal camera feed function
-def update_thermal_camera():
-    global thermalImgTk
+# def update_thermal_camera():
+    # global thermalImgTk
 
-    # Get the thermal frame from the camera
-    thermal_frame = thermal_camera.get_image_frame_for_gui()
+    # # Get the thermal frame from the camera
+    # thermal_frame = thermal_camera.get_image_frame_for_gui()
     
-    # Convert the frame to a Tkinter-compatible format
-    thermal_img = Image.fromarray(cv2.cvtColor(thermal_frame, cv2.COLOR_BGR2RGB))
-    thermal_img = thermal_img.resize((1920, 1080))  # Resize to match the label size
-    thermalImgTk = ImageTk.PhotoImage(image=thermal_img)
+    # # Convert the frame to a Tkinter-compatible format
+    # thermal_img = Image.fromarray(cv2.cvtColor(thermal_frame, cv2.COLOR_BGR2RGB))
+    # thermal_img = thermal_img.resize((1920, 1080))  # Resize to match the label size
+    # thermalImgTk = ImageTk.PhotoImage(image=thermal_img)
 
-    # Update the label with the new image
-    ThermalCameraLabel.imgTk = thermalImgTk
-    ThermalCameraLabel.config(image=thermalImgTk)
+    # # Update the label with the new image
+    # ThermalCameraLabel.imgTk = thermalImgTk
+    # ThermalCameraLabel.config(image=thermalImgTk)
 
-    # Schedule the next update (100ms delay)
-    ThermalCameraLabel.after(100, update_thermal_camera)
+    # # Schedule the next update (100ms delay)
+    # ThermalCameraLabel.after(100, update_thermal_camera)
 
 #body temp data
-bodytempFrame = ttk.Frame(rightFrame)
+bodytempFrame = Frame(rightFrame, padding=20, bootstyle="secondary")
 bodytempFrame.grid(row=2, column=0, padx=10, pady=10, sticky='ew')
 
-bodytempLabel = ttk.Label(bodytempFrame, text='Body Temp °C  ')
-bodytempLabel.grid(row=1, column=0, padx=5, pady=(10,0), sticky='s')
+bodytempLabel = Label(
+    bodytempFrame,
+    text=' Body Temp °C',
+    font=('Segoe UI', 18, 'bold'))
+bodytempLabel.grid(row=0, column=0, padx=5, pady=(10, 0), sticky='sw')
 
-bodytempDataEntry = ttk.Entry(bodytempFrame, width=10)
-bodytempDataEntry.grid(row=2, column=0, padx=10, pady=(0,5), sticky='n')
+bodytempDataEntry = Entry(
+    bodytempFrame,
+    width=10,
+    font=('Segoe UI', 16),
+    style="Custom.TEntry")
+bodytempDataEntry.grid(row=1, column=0, padx=10, pady=(0, 5), sticky='wn')
 
 updateBodyTempData()
 
 #agv location data
-locationFrame = ttk.Frame(rightFrame)
+locationFrame = Frame(rightFrame, padding=20, bootstyle="secondary")
 locationFrame.grid(row=0, column=0, padx=10, pady=10, sticky='ew')
 
-locationLabel = ttk.Label(locationFrame, text='AGV Location')
-locationLabel.grid(row=1, column=0, padx=10, pady=(10,0), sticky='w')
+locationLabel = Label(
+    locationFrame,
+    text='AGV Location',
+    font=('Segoe UI', 18, 'bold'))
+locationLabel.grid(row=0, column=0, padx=10, pady=(10, 0), sticky='w')
 
-locationDataEntry = ttk.Entry(locationFrame, width=50)
-locationDataEntry.grid(row=2, column=0, padx=10, pady=(0,5), sticky='n')
-
+locationDataEntry = Entry(
+    locationFrame,
+    width=50,
+    font=('Segoe UI', 16),
+    style="Custom.TEntry")
+locationDataEntry.grid(row=1, column=0, padx=10, pady=(0, 5), sticky='n')
 
 #agv manual movement arrows
-movementFrame = ttk.Frame(rightFrame)
+movementFrame = Frame(rightFrame, padding=20, bootstyle="secondary")
 movementFrame.grid(row=2, column=1, rowspan=2, padx=10, pady=10, sticky='nsew')
 
-movementLabel = ttk.Label(movementFrame, text='Manual AGV Control')
-movementLabel.grid(row=0, column=1, columnspan=3, padx=0, pady=(10, 0), sticky='w')
+centerFrame = Frame(movementFrame, bootstyle="secondary")
+centerFrame.grid(row=0, column=0, sticky='nsew', pady=(0,20))
 
-arrowFrame = ttk.Frame(movementFrame)
-arrowFrame.grid(row=1, column=0, columnspan=3, padx=(35,0), pady=5, sticky='w')
+movementLabel = Label(
+    centerFrame,
+    text='Manual AGV Control',
+    font=('Segoe UI', 18, 'bold'))
+movementLabel.grid(row=0, column=0, padx=0, pady=(30, 10), sticky='n')
 
-forwardButton = Button(arrowFrame, text='Forward', width=3, height=2)
-forwardButton.grid(row=2, column=1, padx=5, pady=(0,5))
+arrowFrame = Frame(centerFrame, bootstyle="secondary")
+arrowFrame.grid(row=1, column=0, sticky='n')
+
+arrow_btn_config = {
+    "bootstyle": "info-lg",
+    "padding": (20, 15),
+    "width": 10,
+    "style": "Large.TButton"}
+
+forwardButton = Button(arrowFrame, text='Forward', **arrow_btn_config)
+forwardButton.grid(row=0, column=1, padx=10, pady=10)
 forwardButton.bind("<ButtonPress>", lambda event: on_press(forward))
 forwardButton.bind("<ButtonRelease>", lambda event: on_release())
 
-backwardButton = Button(arrowFrame, text='Backward', width=3, height=2)
-backwardButton.grid(row=4, column=1, padx=5, pady=5)
+backwardButton = Button(arrowFrame, text='Backward', **arrow_btn_config)
+backwardButton.grid(row=2, column=1, padx=10, pady=10)
 backwardButton.bind("<ButtonPress>", lambda event: on_press(backward))
 backwardButton.bind("<ButtonRelease>", lambda event: on_release())
 
-leftButton = Button(arrowFrame, text='Left', width=3, height=2)
-leftButton.grid(row=3, column=0, padx=5, pady=5)
+leftButton = Button(arrowFrame, text='Left', **arrow_btn_config)
+leftButton.grid(row=1, column=0, padx=10, pady=10)
 leftButton.bind("<ButtonPress>", lambda event: on_press(left))
 leftButton.bind("<ButtonRelease>", lambda event: on_release())
 
-rightButton = Button(arrowFrame, text='Right', width=3, height=2)
-rightButton.grid(row=3, column=2, padx=5, pady=5)
+rightButton = Button(arrowFrame, text='Right', **arrow_btn_config)
+rightButton.grid(row=1, column=2, padx=10, pady=10)
 rightButton.bind("<ButtonPress>", lambda event: on_press(right))
 rightButton.bind("<ButtonRelease>", lambda event: on_release())
 
-stopButton = Button(arrowFrame, text='stop', width=3, height=2)
-stopButton.grid(row=3, column=1, padx=5, pady=5)
+stopButton = Button(arrowFrame, text='Stop', **arrow_btn_config)
+stopButton.grid(row=1, column=1, padx=5, pady=5)
 
 #mechanical arm
-armFrame = ttk.Frame(rightFrame)
+armFrame = Frame(rightFrame, padding=20, bootstyle="secondary")
 armFrame.grid(row=0, column=1, padx=85, pady=10, sticky='nsew')
 
-armLabel = ttk.Label(armFrame, text='Mechanical Arm Control')
-armLabel.grid(row=0, column=0, padx=10, pady=(10,0), sticky='w')
+armLabel = Label(
+    armFrame,
+    text='Mechanical Arm Control',
+    font=('Segoe UI', 18, 'bold'))
+armLabel.grid(row=0, column=0, padx=10, pady=(10, 0), sticky='nsew')
 
 #bottom frame
 #battery progress bar
-bottomFrame = ttk.Label(updatesTab)
-bottomFrame.grid(row=2, column=0, columnspan=2, sticky='nsew', padx=10, pady=10)
+style.configure("NoBorder.TFrame",
+    background="#222222",
+    borderwidth=0,
+    relief="flat")
 
-batteryLabel = ttk.Label(bottomFrame, text='Battery: 0%')
+style.configure("FlatBattery.Horizontal.TProgressbar",
+    background="#4f94d4",
+    troughcolor="white",
+    bordercolor="#222222",
+    lightcolor="#222222",
+    darkcolor="#222222")
+
+bottomFrame = Frame(updatesTab, padding=10, style="NoBorder.TFrame")
+bottomFrame.grid(row=2, column=0, columnspan=2, sticky='ew')
+
+batteryLabel = Label(
+    bottomFrame,
+    text='Battery: 0%',
+    font=('Segoe UI', 12),
+    background="#222222",
+    foreground="white")
 batteryLabel.grid(row=0, column=0, padx=(0, 10), sticky='w')
 
-batteryProgressBar = ttk.Progressbar(bottomFrame, orient=HORIZONTAL, length=200, mode='determinate')
-batteryProgressBar.grid(row=0, column=1, padx=(0,10), sticky='w')
+batteryProgressBar = ttkb.Progressbar(
+    bottomFrame,
+    orient='horizontal',
+    length=200,
+    mode='determinate',
+    style="FlatBattery.Horizontal.TProgressbar")
+batteryProgressBar.grid(row=0, column=1, padx=(0, 10), sticky='w')
 
 updateBatteryLevel()
 
 #data log button
-collectDataButton = tk.Button(bottomFrame, text="Log Data", command=logSensorData)
+style.configure("LogData.TButton", font=("Segoe UI", 14, "bold"))
+collectDataButton = Button(
+    bottomFrame,
+    text="Log Data",
+    command=logSensorData,
+    style='LogData.TButton',
+    padding=(15, 10))
 collectDataButton.grid(row=0, column=2, padx=(10, 0), sticky='e')
-collectDataButton.config(font=('Arial', 14))
-collectDataButton.grid_configure(ipadx=5, ipady=10)
 
 #AGV REAL-TIME UPDATES TAB
 #camera frame
 CAMERA_WIDTH=450
 CAMERA_HEIGHT=300
 
-cameraFrame = ttk.Frame(trackingTab, width=10, height=10)
-cameraFrame.grid(row=0, column=0, padx=0, pady=(10, 0), sticky='news')
+cameraFrame = Frame(trackingTab, padding=10, bootstyle="secondary")
+cameraFrame.grid(row=0, column=0, padx=5, pady=5, sticky='nsew')
 
-cameraTextLabel = ttk.Label(cameraFrame, text='AGV Camera', padding=(10, 5), font=("Arial", 16, "bold"))
-cameraTextLabel.grid(row=0, column=0, sticky='nsew')
+cameraTextLabel = Label(
+    cameraFrame,
+    text='AGV Camera',
+    font=("Segoe UI", 16, "bold"))
+cameraTextLabel.grid(row=0, column=0, sticky='w', pady=(0, 5))
 
-cameraLabel = Label(cameraFrame, text='Camera', fg='white', bg='black', width=CAMERA_WIDTH, height=CAMERA_HEIGHT)
-cameraLabel.grid(row=1, column=0, sticky='nsew', padx=10, pady=(0,10))
+cameraLabel = tk.Label(
+    cameraFrame,
+    text='Camera',
+    background='black',
+    foreground='white',
+    width=CAMERA_WIDTH,
+    height=CAMERA_HEIGHT)
+cameraLabel.grid(row=1, column=0, sticky='nsew')
 
 camera = cv2.VideoCapture(0)
 cameraFeed()
 
-
-#thermalCameraFeed()
-
 #map frame
-mapFrame = ttk.Frame(trackingTab)
-mapFrame.grid(row=0, column=1, rowspan=2, padx=0, pady=10, sticky='news')
+mapFrame = Frame(trackingTab, padding=10, bootstyle="secondary")
+mapFrame.grid(row=0, column=1, padx=5, pady=5, sticky='nsew')
 
-AGVTextLabel = ttk.Label(mapFrame, text='AGV Environment Map', padding=(10, 5), font=("Arial", 16, "bold"))
-AGVTextLabel.grid(row=0, column=0, sticky='nsew')
+AGVTextLabel = Label(
+    mapFrame,
+    text='AGV Environment Map',
+    font=("Segoe UI", 16, "bold"))
+AGVTextLabel.grid(row=0, column=0, sticky='w', pady=(0, 5))
 
-mapCanvas = Canvas(mapFrame, bg='black', width=500, height=10)
-mapCanvas.grid(row=1, column=0, rowspan=2, sticky='news', padx=10, pady=(0,10))
+mapCanvas = Canvas(
+    mapFrame,
+    bg='black',
+    width=500,
+    height=CAMERA_HEIGHT)
+mapCanvas.grid(row=1, column=0, sticky='nsew', padx=10, pady=(0, 10))
 
 trackingMap()
 
 #SURVIVOR DETECTION TAB
 #table
-tableFrame = ttk.Frame(survivorTab)
-tableFrame.pack(fill='both', expand=True, padx=10, pady=10)
+tableFrame = Frame(survivorTab, padding=10, bootstyle="secondary")
+tableFrame.pack(fill='both', expand=True, padx=10, pady=(10, 0))
+style.configure("Custom.Treeview",
+    background="#444344",
+    fieldbackground="#375a7f",
+    foreground="white",
+    rowheight=28,
+    borderwidth=0)
+style.configure("Custom.Treeview.Heading",
+    background=style.colors.primary,
+    foreground="white",
+    font=("Segoe UI", 14, "bold"),
+    relief="solid")
+style.map("Custom.Treeview.Heading",
+    background=[('active', style.colors.primary)],
+    relief=[('pressed', 'flat')])
 
-dataTable = ttk.Treeview(tableFrame, columns=('Location', 'Time', 'Heartbeat', 'Vocal', 'Body Temp °C'), show='headings')
+dataTable = Treeview(
+    tableFrame,
+    columns=('Location', 'Time', 'Heartbeat', 'Vocal', 'Body Temp °C'),
+    show='headings',
+    style="Custom.Treeview")
+
 dataTable.pack(fill='both', expand=True)
 
 dataTable.heading('Location', text='Location')
@@ -673,40 +872,68 @@ dataTable.column('Heartbeat', width=100, anchor='center')
 dataTable.column('Vocal', width=100, anchor='center')
 dataTable.column('Body Temp °C', width=100, anchor='center')
 
-exportButton = ttk.Button(survivorTab, text='Export Data', command = exportData)
-exportButton.pack(pady=10)
+#bottom frame in survivor detection tab
+bottomBar = Frame(survivorTab, padding=10, style='NoBorder.TFrame')
+bottomBar.pack(fill='x', side='bottom')
+
+exportButton = Button(
+    bottomBar,
+    text='Export Data',
+    command=exportData,
+    style='LogData.TButton',
+    padding=(15, 10))
+exportButton.pack(padx=10)
 
 #AGV PATH TAB
-#path frame
-#pathFrame = ttk.Frame(pathTab)
-#pathFrame.pack(fill='both', expand=True, padx=10, pady=10)
+pathContainer = Frame(pathTab, padding=40, bootstyle="secondary")
+pathContainer.grid(row=0, column=0, sticky='nsew')
 
-pathLabel = ttk.Label(pathTab, text='AGV Point A to Point B', padding=(10, 5), font=("Arial", 16, "bold"))
-pathLabel.grid(row=0, column=0, padx=5, pady=(0, 10), sticky='s')
+# Make sure pathTab expands properly
+pathTab.grid_rowconfigure(0, weight=1)
+pathTab.grid_columnconfigure(0, weight=1)
 
-# Point A is AGV location while Point B is destination
-pointALabel = ttk.Label(pathTab, text='Current Location (latitude, longitude)', padding=(10, 5), font=("Arial", 16, "bold"))
-pointALabel.grid(row=2, column=0, padx=5, pady=(10,0), sticky='s')
-pointAEntry = ttk.Entry(pathTab, width=50)
-pointAEntry.grid(row=3, column=0, padx=5, pady=(0,5), sticky='n')
+# Let pathContainer expand its rows (adjust weights as needed)
+for i in range(12):
+    pathContainer.grid_rowconfigure(i, weight=1)
+pathContainer.grid_columnconfigure(0, weight=1)
 
-pointBLabel = ttk.Label(pathTab, text='Enter Destination (latitude, longitude)', padding=(10, 5), font=("Arial", 16, "bold"))
-pointBLabel.grid(row=5, column=0, padx=5, pady=(10,0), sticky='s')
-#pathLabel.grid(row=1, column=0, padx=5, pady=(10,0), sticky='s')
-pointBEntry = ttk.Entry(pathTab, width=50)
-pointBEntry.grid(row=6, column=0, padx=5, pady=(0,5), sticky='n')
+# Fonts and settings
+LABEL_FONT = ("Segoe UI", 16, "bold")
+ENTRY_FONT = ("Segoe UI", 14)
 
-distanceLabel = ttk.Label(pathTab, text='Resulting Distance in kilometers', padding=(10, 5), font=("Arial", 16, "bold"))
-distanceLabel.grid(row=7, column=0, padx=5, pady=(10,0), sticky='s')
-distanceDisplay = ttk.Entry(pathTab, width=50)
-distanceDisplay.grid(row=8, column=0, padx=5, pady=(0,5), sticky='n')
+# Title
+pathLabel = Label(
+    pathContainer,
+    text='AGV Point A to Point B',
+    font=("Segoe UI", 20, "bold"))
+pathLabel.grid(row=0, column=0, pady=0, sticky='n')
 
-directionLabel = ttk.Label(pathTab, text='Resulting Direction Clockwise From North (degrees)', padding=(10, 5), font=("Arial", 16, "bold"))
-directionLabel.grid(row=9, column=0, padx=5, pady=(10,0), sticky='s')
-directionDisplay = ttk.Entry(pathTab, width=50)
-directionDisplay.grid(row=10, column=0, padx=5, pady=(0,5), sticky='n')
+# Current location
+pointALabel = Label(pathContainer, text='Current Location (latitude, longitude)', font=LABEL_FONT)
+pointALabel.grid(row=1, column=0, pady=(10, 0), sticky='w')
+pointAEntry = Entry(pathContainer, font=ENTRY_FONT)
+pointAEntry.grid(row=2, column=0, pady=(20, 5), sticky='ew')
+
+# Destination
+pointBLabel = Label(pathContainer, text='Enter Destination (latitude, longitude)', font=LABEL_FONT)
+pointBLabel.grid(row=3, column=0, pady=(10, 0), sticky='w')
+pointBEntry = Entry(pathContainer, font=ENTRY_FONT)
+pointBEntry.grid(row=4, column=0, pady=(0, 5), sticky='ew')
+
+# Distance
+distanceLabel = Label(pathContainer, text='Resulting Distance in kilometers', font=LABEL_FONT)
+distanceLabel.grid(row=5, column=0, pady=(10, 0), sticky='w')
+distanceDisplay = Entry(pathContainer, font=ENTRY_FONT)
+distanceDisplay.grid(row=6, column=0, pady=(0, 5), sticky='ew')
+
+# Direction
+directionLabel = Label(pathContainer, text='Resulting Direction Clockwise From North (degrees)', font=LABEL_FONT)
+directionLabel.grid(row=7, column=0, pady=(10, 0), sticky='w')
+directionDisplay = Entry(pathContainer, font=ENTRY_FONT)
+directionDisplay.grid(row=8, column=0, pady=(0, 5), sticky='ew')
 
 #Calculate Direction And Distance
+# Calculation logic
 def calculateVector():
     try:
         pointA = pointAEntry.get().split(',')
@@ -718,39 +945,35 @@ def calculateVector():
         latA, longA = map(float, pointA)
         latB, longB = map(float, pointB)
 
-        # Calculate distance using Haversine formula
-        R = 6371  # Radius of the Earth in kilometers
+        # Haversine formula
+        R = 6371  # Earth radius in km
         dlat = np.radians(latB - latA)
         dlong = np.radians(longB - longA)
         a = np.sin(dlat / 2) ** 2 + np.cos(np.radians(latA)) * np.cos(np.radians(latB)) * np.sin(dlong / 2) ** 2
         c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
-        distance = R * c  # Distance in kilometers
-        
-        # Calculate direction in degrees clockwise from North
+        distance = R * c
+
         y = np.sin(dlong) * np.cos(np.radians(latB))
         x = np.cos(np.radians(latA)) * np.sin(np.radians(latB)) - np.sin(np.radians(latA)) * np.cos(np.radians(latB)) * np.cos(dlong)
-        direction = (np.degrees(np.arctan2(y, x)) + 360) % 360  
+        direction = (np.degrees(np.arctan2(y, x)) + 360) % 360
 
-        # Display results
         distanceDisplay.delete(0, END)
         distanceDisplay.insert(0, f"{distance:.4f}")
         directionDisplay.delete(0, END)
         directionDisplay.insert(0, f"{direction:.2f}")
-        #distanceDisplay.config(text=f"Distance: {distance:.4f} earth degrees")
-        #directionDisplay.config(text=f"Direction: {direction:.2f} degrees clockwise from North")
-        return distance, direction
     except Exception as e:
         distanceDisplay.delete(0, END)
         distanceDisplay.insert(0, f"Error: {str(e)}")
         directionDisplay.delete(0, END)
-        directionDisplay.insert(0, pointA)
-        #distanceDisplay.config(text=f"Error: {str(e)}")
-        #directionDisplay.config(text=f"Error: {str(e)}")
+        directionDisplay.insert(0, "")
 
-calculateDistanceDirection = tk.Button(pathTab, text="Get Distance & Direction", command=calculateVector)
-calculateDistanceDirection.grid(row=11, column=0, padx=(10, 0), pady=(10, 0), sticky='n')
-calculateDistanceDirection.config(font=('Arial', 14))
-calculateDistanceDirection.grid_configure(ipadx=5, ipady=10)
+# Calculate button
+calculateDistanceDirection = Button(
+    pathContainer,
+    text="Get Distance & Direction",
+    command=calculateVector,
+    style='LogData.TButton')
+calculateDistanceDirection.grid(row=9, column=0, pady=(15, 0), sticky='n')
 
 updateAGVLocation()
 
@@ -773,40 +996,65 @@ def viewNotification(event):
 # Bind double-click event to open detailed notification
 notificationList.bind("<Double-1>", viewNotification)
 
-#for window scaling
-updatesTab.columnconfigure(1, weight=1)
-updatesTab.rowconfigure(0, weight=1)
+# #for window scaling
+updatesTab.grid_rowconfigure(0, weight=1)
+updatesTab.grid_columnconfigure(1, weight=1)
 
-rightFrame.rowconfigure((0,1,2,3, 4), weight=1, uniform='column')
-rightFrame.columnconfigure((0,1), weight=1)
-arrowFrame.columnconfigure((0,1,2), weight=1)
+vocalFrame.grid_columnconfigure(0, weight=1)
+vocalFrame.grid_columnconfigure(1, weight=0)
 
-trackingTab.columnconfigure(0, weight=1)
-trackingTab.columnconfigure(1, weight=2)
-trackingTab.rowconfigure(0,weight=1)
+waveformFrame.grid_columnconfigure(0, weight=1)
+canvas.get_tk_widget().grid(row=1, column=0, padx=0, pady=0, sticky='nsew')
+waveformFrame.grid_columnconfigure(0, weight=1)
+waveformFrame.grid_rowconfigure(1, weight=1)
+fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
 
-bottomFrame.columnconfigure(0, weight=0)
-bottomFrame.columnconfigure(1, weight=1)
-bottomFrame.columnconfigure(2, weight=0)
+movementFrame.grid_rowconfigure(0, weight=1)
+movementFrame.grid_columnconfigure(0, weight=1)
+centerFrame.grid_rowconfigure(0, weight=1)
+centerFrame.grid_columnconfigure(0, weight=1)
 
-mapFrame.grid_rowconfigure(0, weight=0)
-mapFrame.grid_rowconfigure(1, weight=1)
-mapFrame.grid_columnconfigure(0, weight=1)
+arrowFrame.grid_columnconfigure(0, weight=1)
+arrowFrame.grid_columnconfigure(1, weight=1)
+arrowFrame.grid_columnconfigure(2, weight=1)
+
+bottomFrame.grid_columnconfigure(2, weight=1)
 
 trackingTab.grid_rowconfigure(0, weight=1)
-trackingTab.grid_rowconfigure(1, weight=1)
 trackingTab.grid_columnconfigure(0, weight=1)
 trackingTab.grid_columnconfigure(1, weight=1)
 
+cameraFrame.grid_rowconfigure(1, weight=1)
+cameraFrame.grid_columnconfigure(0, weight=1)
 
-#thermal camera frame
-ThermalCameraFrame = ttk.Frame(thermalCamTab, width=10, height=10)
-ThermalCameraFrame.grid(row=1, column=0, padx=0, pady=10, sticky='news')
-ThermalCameraLabel = ttk.Label(thermalCamTab)
-ThermalCameraLabel.grid(row=0, column=0, padx=10, pady=10)
+mapFrame.grid_rowconfigure(1, weight=1)
+mapFrame.grid_columnconfigure(0, weight=1)
 
-# Start the thermal camera feed when the application runs
-update_thermal_camera()
+dataTable.tag_configure('oddrow', background='#444344')
+dataTable.tag_configure('evenrow', background='#3c3c3c')
+
+# trackingTab.columnconfigure(0, weight=1)
+# trackingTab.columnconfigure(1, weight=2)
+# trackingTab.rowconfigure(0,weight=1)
+
+# mapFrame.grid_rowconfigure(0, weight=0)
+# mapFrame.grid_rowconfigure(1, weight=1)
+# mapFrame.grid_columnconfigure(0, weight=1)
+
+# trackingTab.grid_rowconfigure(0, weight=1)
+# trackingTab.grid_rowconfigure(1, weight=1)
+# trackingTab.grid_columnconfigure(0, weight=1)
+# trackingTab.grid_columnconfigure(1, weight=1)
+
+
+# #thermal camera frame
+# ThermalCameraFrame = ttk.Frame(thermalCamTab, width=10, height=10)
+# ThermalCameraFrame.grid(row=1, column=0, padx=0, pady=10, sticky='news')
+# ThermalCameraLabel = ttk.Label(thermalCamTab)
+# ThermalCameraLabel.grid(row=0, column=0, padx=10, pady=10)
+
+# # Start the thermal camera feed when the application runs
+# # update_thermal_camera()
 
 def main():
     root.mainloop()
