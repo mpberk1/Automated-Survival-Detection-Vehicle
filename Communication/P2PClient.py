@@ -21,5 +21,5 @@ def p2p_client(server_ip, port=5000):
         client_socket.close()
 
 if __name__ == "__main__":
-    server_ip = '10.33.138.229'
+    server_ip = '10.33.254.219'
     p2p_client(server_ip)

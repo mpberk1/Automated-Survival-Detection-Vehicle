@@ -4,13 +4,12 @@ import sys
 import os
 from pathlib import Path
 
-#Dynamically get file paths
-current_file = Path(__file__) # Path to this file
-project_root = current_file.parent.parent # Path to Automated-Survival-Detection-Vehicle
+# Dynamically get file paths
+current_file = Path(__file__)  # Path to this file
+project_root = current_file.parent.parent  # Path to Automated-Survival-Detection-Vehicle
 sys.path.insert(0, str(project_root))
 # Path to MotorControl.py
 motor_path = project_root / "DeviceDrivers" / "MotorControl.py"
-
 
 # Load MotorControl module
 spec = importlib.util.spec_from_file_location("MotorControl", motor_path)
@@ -21,14 +20,30 @@ spec.loader.exec_module(motor)
 # Command dispatcher
 def handle_command(command):
     if command == "forward":
-        return motor.move_forward()
+        result = motor.move_forward()
+        return result if result is not None else "Executed: forward"
     elif command == "stop":
-        return motor.stop()
+        result = motor.stop()
+        return result if result is not None else "Executed: stop"
     else:
         return f"Unknown command: {command}"
 
+# Automatically get the local IP address of the Pi
+def get_local_ip():
+    try:
+        # Connect to an external IP (doesn't actually send data)
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))  # Google DNS
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception as e:
+        print(f"Could not determine local IP: {e}")
+        return "127.0.0.1"
+
 # Server function
-def p2p_server(host='10.33.147.31', port=5000):
+def p2p_server(port=5000):
+    host = get_local_ip()
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((host, port))
     server_socket.listen(1)
