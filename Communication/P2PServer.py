@@ -1,8 +1,34 @@
 import socket
-#GS
+import importlib.util
+import sys
+import os
+from pathlib import Path
 
-# Setup the server to listen for incoming connections
-def p2p_server(host='10.33.138.229', port=5000):
+#Dynamically get file paths
+current_file = Path(__file__) # Path to this file
+project_root = current_file.parent.parent # Path to Automated-Survival-Detection-Vehicle
+sys.path.insert(0, str(project_root))
+# Path to MotorControl.py
+motor_path = project_root / "DeviceDrivers" / "MotorControl.py"
+
+
+# Load MotorControl module
+spec = importlib.util.spec_from_file_location("MotorControl", motor_path)
+motor = importlib.util.module_from_spec(spec)
+sys.modules["MotorControl"] = motor
+spec.loader.exec_module(motor)
+
+# Command dispatcher
+def handle_command(command):
+    if command == "forward":
+        return motor.move_forward()
+    elif command == "stop":
+        return motor.stop()
+    else:
+        return f"Unknown command: {command}"
+
+# Server function
+def p2p_server(host='10.33.147.31', port=5000):
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((host, port))
     server_socket.listen(1)
@@ -16,8 +42,9 @@ def p2p_server(host='10.33.138.229', port=5000):
         if not data:
             break
         print(f"Received: {data}")
-        # Echo the message back
-        conn.sendall(f"Echo: {data}".encode('utf-8'))
+
+        response = handle_command(data)
+        conn.sendall(response.encode('utf-8'))
 
     conn.close()
     server_socket.close()
