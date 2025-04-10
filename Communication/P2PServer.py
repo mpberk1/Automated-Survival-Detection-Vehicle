@@ -28,22 +28,8 @@ def handle_command(command):
     else:
         return f"Unknown command: {command}"
 
-# Automatically get the local IP address of the Pi
-def get_local_ip():
-    try:
-        # Connect to an external IP (doesn't actually send data)
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))  # Google DNS
-        ip = s.getsockname()[0]
-        s.close()
-        return ip
-    except Exception as e:
-        print(f"Could not determine local IP: {e}")
-        return "127.0.0.1"
-
-# Server function
-def p2p_server(port=5000):
-    host = get_local_ip()
+# Server function using static IP
+def p2p_server(host="10.33.253.71", port=5000):  # <== STATIC IP HERE
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((host, port))
     server_socket.listen(1)

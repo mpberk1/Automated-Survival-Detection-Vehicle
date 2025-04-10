@@ -10,7 +10,7 @@ REVERSE_M1 = 1
 REVERSE_M2 = 128
 
 # Set up serial communication on the Pi's UART (GPIO14 TX, GPIO15 RX)
-ser = serial.Serial("/dev/ttyAMA0)", baudrate=38400, timeout=1)
+ser = serial.Serial("/dev/ttyAMA0", baudrate=38400, timeout=1)
 
 def send_command(command):
     """Send a single byte command to the motor driver."""
