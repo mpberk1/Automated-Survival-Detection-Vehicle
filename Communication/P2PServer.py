@@ -19,10 +19,24 @@ spec.loader.exec_module(motor)
 
 # Command dispatcher
 def handle_command(command):
+    #forward
     if command == "forward":
         result = motor.move_forward()
         return result if result is not None else "Executed: forward"
-    elif command == "stop":
+    #backward
+    elif command == "backward":
+        result = motor.move_reverse()
+        return result if result is not None else "Executed: backward"
+    #left
+    elif command == "left":
+        result = motor.turn_left()
+        return result if result is not None else "Executed: turn left"
+    #right
+    elif command == "right":
+        result = motor.turn_left()
+        return result if result is not None else "Executed: turn right"
+    #stop
+     elif command == "stop":
         result = motor.stop()
         return result if result is not None else "Executed: stop"
     else:

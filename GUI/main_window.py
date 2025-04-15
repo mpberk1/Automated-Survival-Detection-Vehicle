@@ -14,6 +14,7 @@ from tkinter import filedialog
 from pathlib import Path
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import socket
 
 import speech_recognition as sr
 import queue
@@ -51,6 +52,18 @@ stream = None
 
 gpsDir =project_root / "GPS"
 sys.path.append(str(gpsDir))
+
+#function to send commmands to the server:
+def send_command_to_server(command):
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect(("10.33.253.71", 5000))
+            s.sendall(command.encode('utf-8'))
+            response = s.recv(1024).decode('utf-8')
+            print("Server response:", response)
+    except Exception as e:
+        print(f"Failed to send command: {e}")
+
 
 #update clock info
 def updateclock():
@@ -231,26 +244,31 @@ button_pressed = False
 def forward():
     if button_pressed:
         # MotorControl.move_forward(duration=2)
+        send_command_to_server("forward")
         addNotification("AGV Forward Movement")
         root.after(100,forward)
 def backward():
     if button_pressed:
         # MotorControl.move_reverse(duration=2)
+        send_command_to_server("backward")
         addNotification("AGV Backward Movement")
         root.after(100,backward)
 def left():
     if button_pressed:
         # MotorControl.turn_left(duration=2)
+        send_command_to_server("left")
         addNotification("AGV Left Movement")
         root.after(100,left)
 def right():
     if button_pressed:
         # MotorControlß.turn_right(duration=2)
+        send_command_to_server("right")
         addNotification("AGV Right Movement")
         root.after(100,right)
 def stop():
     if button_pressed:
         #MotorControl.stop()
+        send_command_to_server("stop")
         addNotification("AGV Stop")
 
 def on_press(direction):
