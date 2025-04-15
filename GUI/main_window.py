@@ -53,18 +53,29 @@ stream = None
 gpsDir =project_root / "GPS"
 sys.path.append(str(gpsDir))
 
+def init_socket_connection():
+    global client_socket
+    try:
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client_socket.connect(("10.33.228.31", 5000))
+        print("Connected to server.")
+    except Exception as e:
+        print(f"Failed to connect to server: {e}")
+        client_socket = None
+
 #function to send commmands to the server:
 def send_command_to_server(command):
+    global client_socket
     try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect(("10.33.228.31", 5000))
-            s.sendall(command.encode('utf-8'))
-            response = s.recv(1024).decode('utf-8')
+        if client_socket:
+            client_socket.sendall(command.encode('utf-8'))
+            response = client_socket.recv(1024).decode('utf-8')
             print("Server response:", response)
+        else:
+            print("Socket not connected.")
     except Exception as e:
         print(f"Failed to send command: {e}")
-
-
+init_socket_connection()
 #update clock info
 def updateclock():
     eastern = ZoneInfo('America/New_York')
