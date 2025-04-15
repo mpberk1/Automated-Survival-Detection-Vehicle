@@ -36,7 +36,7 @@ def handle_command(command):
         result = motor.turn_right()
         return result if result is not None else "Executed: turn right"
     #stop
-     elif command == "stop":
+    elif command == "stop":
         result = motor.stop()
         return result if result is not None else "Executed: stop"
     else:
