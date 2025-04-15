@@ -21,7 +21,7 @@ def move_forward():
     """Move both motors forward for a specified duration."""
     print("Moving forward...")
     send_command(FULL_FORWARD_M1)
-    # send_command(REVERSE_M2)
+    send_command(FULL_FORWARD_M2)
     # stop()
 
 def stop():
@@ -33,7 +33,7 @@ def stop():
 def move_reverse():
     """Move both motors in reverse for a specified duration."""
     print("Moving in reverse...")
-    send_command(FULL_FORWARD_M1)
+    send_command(REVERSE_M1)
     send_command(REVERSE_M2)
     # time.sleep(duration)
     # stop()
