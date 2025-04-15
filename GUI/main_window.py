@@ -57,7 +57,7 @@ sys.path.append(str(gpsDir))
 def send_command_to_server(command):
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect(("10.33.253.71", 5000))
+            s.connect(("10.33.228.31", 5000))
             s.sendall(command.encode('utf-8'))
             response = s.recv(1024).decode('utf-8')
             print("Server response:", response)

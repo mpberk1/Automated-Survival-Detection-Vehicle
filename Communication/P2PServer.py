@@ -43,7 +43,7 @@ def handle_command(command):
         return f"Unknown command: {command}"
 
 # Server function using static IP
-def p2p_server(host="10.33.253.71", port=5000):  # <== STATIC IP HERE
+def p2p_server(host="10.33.228.31", port=5000):  # <== STATIC IP HERE
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((host, port))
     server_socket.listen(1)
