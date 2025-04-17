@@ -10,6 +10,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from PIL import Image, ImageTk
 from PIL import ImageOps
+import pickle
 from tkinter import filedialog
 from pathlib import Path
 from matplotlib.figure import Figure
@@ -293,33 +294,76 @@ def on_release():
     stop()
 
 
-def cameraFeed():
-    global imgTk
-    ret, frame = camera.read()
-    if ret:
-        label_width = cameraLabel.winfo_width()
-        label_height = cameraLabel.winfo_height()
+# def cameraFeed():
+#     global imgTk
+#     ret, frame = camera.read()
+#     if ret:
+#         label_width = cameraLabel.winfo_width()
+#         label_height = cameraLabel.winfo_height()
 
-        if label_width > 1 and label_height > 1:
-            frame_height, frame_width = frame.shape[:2]
-            aspect_ratio = frame_width / frame_height
+#         if label_width > 1 and label_height > 1:
+#             frame_height, frame_width = frame.shape[:2]
+#             aspect_ratio = frame_width / frame_height
 
-            if label_width / aspect_ratio <= label_height:
-                new_width = label_width
-                new_height = int(label_width / aspect_ratio)
-            else:
-                new_height = label_height
-                new_width = int(label_height * aspect_ratio)
+#             if label_width / aspect_ratio <= label_height:
+#                 new_width = label_width
+#                 new_height = int(label_width / aspect_ratio)
+#             else:
+#                 new_height = label_height
+#                 new_width = int(label_height * aspect_ratio)
 
-            frame = cv2.resize(frame, (new_width, new_height))
+#             frame = cv2.resize(frame, (new_width, new_height))
 
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        img = Image.fromarray(frame)
-        imgTk = ImageTk.PhotoImage(image=img)
-        cameraLabel.imgTk = imgTk
-        cameraLabel.config(image=imgTk)
+#         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+#         img = Image.fromarray(frame)
+#         imgTk = ImageTk.PhotoImage(image=img)
+#         cameraLabel.imgTk = imgTk
+#         cameraLabel.config(image=imgTk)
 
-    cameraLabel.after(10, cameraFeed)
+#     cameraLabel.after(10, cameraFeed)
+
+def receive_camera_feed(camera_socket, camera_label):
+    data = b""
+    payload_size = struct.calcsize("Q")
+
+    def update_frame():
+        nonlocal data
+        try:
+            while len(data) < payload_size:
+                packet = camera_socket.recv(4096)
+                if not packet:
+                    print("Disconnected from camera server.")
+                    return
+                data += packet
+
+            packed_msg_size = data[:payload_size]
+            data = data[payload_size:]
+            msg_size = struct.unpack("Q", packed_msg_size)[0]
+
+            while len(data) < msg_size:
+                packet = camera_socket.recv(4096)
+                if not packet:
+                    print("Disconnected from camera server.")
+                    return
+                data += packet
+
+            frame_data = data[:msg_size]
+            data = data[msg_size:]
+
+            frame = pickle.loads(frame_data)
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            img = Image.fromarray(frame)
+            imgTk = ImageTk.PhotoImage(image=img)
+
+            camera_label.imgTk = imgTk  # Prevent garbage collection
+            camera_label.config(image=imgTk)
+        except Exception as e:
+            print(f"Camera stream error: {e}")
+            return
+
+        camera_label.after(10, update_frame)
+
+    update_frame()
 
 #logging data from sensors
 #validate input
@@ -840,8 +884,20 @@ cameraLabel = tk.Label(
     height=CAMERA_HEIGHT)
 cameraLabel.grid(row=1, column=0, sticky='nsew')
 
-camera = cv2.VideoCapture(0)
-cameraFeed()
+# Remove this line, since camera is now on the server:
+# camera = cv2.VideoCapture(0)
+
+# Connect to the server's camera stream
+try:
+    camera_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    camera_socket.connect(("10.33.228.31", 6000))
+    print("Connected to camera feed.")
+    
+except Exception as e:
+    print(f"Failed to connect to camera feed: {e}")
+    camera_socket = None
+    
+receive_camera_feed(camera_socket, cameraLabel)
 
 #map frame
 mapFrame = Frame(trackingTab, padding=10, bootstyle="secondary")
