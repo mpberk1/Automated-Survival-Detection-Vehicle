@@ -16,6 +16,7 @@ from pathlib import Path
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import socket
+import struct
 
 import speech_recognition as sr
 import queue
@@ -434,7 +435,7 @@ def exportData():
     
 #main window
 root = ttkb.Window(themename='darkly')
-root.state('zoomed')
+root.state('normal')
 root.title('AGV-HSD')
 # root.geometry('1000x600')
 root.minsize(1050, 700)
@@ -707,23 +708,23 @@ def start_audio_and_waveform():
 root.after(100, start_audio_and_waveform)
 
 # Update the thermal camera feed function
-# def update_thermal_camera():
-    # global thermalImgTk
+def update_thermal_camera():
+    global thermalImgTk
 
-    # # Get the thermal frame from the camera
-    # thermal_frame = thermal_camera.get_image_frame_for_gui()
+    # Get the thermal frame from the camera
+    thermal_frame = thermal_camera.get_image_frame_for_gui()
     
-    # # Convert the frame to a Tkinter-compatible format
-    # thermal_img = Image.fromarray(cv2.cvtColor(thermal_frame, cv2.COLOR_BGR2RGB))
-    # thermal_img = thermal_img.resize((1920, 1080))  # Resize to match the label size
-    # thermalImgTk = ImageTk.PhotoImage(image=thermal_img)
+    # Convert the frame to a Tkinter-compatible format
+    thermal_img = Image.fromarray(cv2.cvtColor(thermal_frame, cv2.COLOR_BGR2RGB))
+    thermal_img = thermal_img.resize((1920, 1080))  # Resize to match the label size
+    thermalImgTk = ImageTk.PhotoImage(image=thermal_img)
 
-    # # Update the label with the new image
-    # ThermalCameraLabel.imgTk = thermalImgTk
-    # ThermalCameraLabel.config(image=thermalImgTk)
+    # Update the label with the new image
+    ThermalCameraLabel.imgTk = thermalImgTk
+    ThermalCameraLabel.config(image=thermalImgTk)
 
-    # # Schedule the next update (100ms delay)
-    # ThermalCameraLabel.after(100, update_thermal_camera)
+    # Schedule the next update (100ms delay)
+    ThermalCameraLabel.after(100, update_thermal_camera)
 
 #body temp data
 bodytempFrame = Frame(rightFrame, padding=20, bootstyle="secondary")
@@ -1120,28 +1121,28 @@ mapFrame.grid_columnconfigure(0, weight=1)
 dataTable.tag_configure('oddrow', background='#444344')
 dataTable.tag_configure('evenrow', background='#3c3c3c')
 
-# trackingTab.columnconfigure(0, weight=1)
-# trackingTab.columnconfigure(1, weight=2)
-# trackingTab.rowconfigure(0,weight=1)
+trackingTab.columnconfigure(0, weight=1)
+trackingTab.columnconfigure(1, weight=2)
+trackingTab.rowconfigure(0,weight=1)
 
-# mapFrame.grid_rowconfigure(0, weight=0)
-# mapFrame.grid_rowconfigure(1, weight=1)
-# mapFrame.grid_columnconfigure(0, weight=1)
+mapFrame.grid_rowconfigure(0, weight=0)
+mapFrame.grid_rowconfigure(1, weight=1)
+mapFrame.grid_columnconfigure(0, weight=1)
 
-# trackingTab.grid_rowconfigure(0, weight=1)
-# trackingTab.grid_rowconfigure(1, weight=1)
-# trackingTab.grid_columnconfigure(0, weight=1)
-# trackingTab.grid_columnconfigure(1, weight=1)
+trackingTab.grid_rowconfigure(0, weight=1)
+trackingTab.grid_rowconfigure(1, weight=1)
+trackingTab.grid_columnconfigure(0, weight=1)
+trackingTab.grid_columnconfigure(1, weight=1)
 
 
-# #thermal camera frame
-# ThermalCameraFrame = ttk.Frame(thermalCamTab, width=10, height=10)
-# ThermalCameraFrame.grid(row=1, column=0, padx=0, pady=10, sticky='news')
-# ThermalCameraLabel = ttk.Label(thermalCamTab)
-# ThermalCameraLabel.grid(row=0, column=0, padx=10, pady=10)
+#thermal camera frame
+ThermalCameraFrame = ttk.Frame(thermalCamTab, width=10, height=10)
+ThermalCameraFrame.grid(row=1, column=0, padx=0, pady=10, sticky='news')
+ThermalCameraLabel = ttk.Label(thermalCamTab)
+ThermalCameraLabel.grid(row=0, column=0, padx=10, pady=10)
 
-# # Start the thermal camera feed when the application runs
-# # update_thermal_camera()
+# Start the thermal camera feed when the application runs
+update_thermal_camera()
 
 def main():
     root.mainloop()

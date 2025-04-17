@@ -6,6 +6,7 @@ from pathlib import Path
 import cv2
 import pickle
 import struct
+import threading
 
 # Dynamically get file paths
 current_file = Path(__file__)  # Path to this file
@@ -100,5 +101,15 @@ def camera_stream_server(host="10.33.228.31", port=6000):
         server_socket.close()
         print("[Camera Server] Closed.")
 
+
+
 if __name__ == "__main__":
-    p2p_server()
+    threading.Thread(target=p2p_server, daemon=True).start()
+    threading.Thread(target=camera_stream_server, daemon=True).start()
+    #p2p_server()
+
+    try:
+        while True:
+            pass
+    except KeyboardInterrupt:
+        print("shutting down")
