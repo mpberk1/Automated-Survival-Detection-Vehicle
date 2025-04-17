@@ -805,6 +805,8 @@ rightButton.bind("<ButtonRelease>", lambda event: on_release())
 
 stopButton = Button(arrowFrame, text='Stop', **arrow_btn_config)
 stopButton.grid(row=1, column=1, padx=5, pady=5)
+stopButton.bind("<ButtonPress>", lambda event: on_press(stop))
+stopButton.bind("<ButtonRelease>", lambda event: on_release())
 
 #mechanical arm
 armFrame = Frame(rightFrame, padding=20, bootstyle="secondary")
