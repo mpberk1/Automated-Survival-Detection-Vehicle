@@ -323,7 +323,7 @@ def on_release():
 
 #     cameraLabel.after(10, cameraFeed)
 
-def receive_camera_feed(camera_socket, camera_label):
+def receive_camera_feed(camera_socket, *camera_labels):
     data = b""
     payload_size = struct.calcsize("Q")
 
@@ -356,13 +356,14 @@ def receive_camera_feed(camera_socket, camera_label):
             img = Image.fromarray(frame)
             imgTk = ImageTk.PhotoImage(image=img)
 
-            camera_label.imgTk = imgTk  # Prevent garbage collection
-            camera_label.config(image=imgTk)
+            for label in camera_labels:
+                label.imgTK = imgTk
+                label.config(image=imgTk)
         except Exception as e:
             print(f"Camera stream error: {e}")
             return
 
-        camera_label.after(10, update_frame)
+        camera_labels[0].after(10, update_frame)
 
     update_frame()
 
@@ -435,7 +436,7 @@ def exportData():
     
 #main window
 root = ttkb.Window(themename='darkly')
-root.state('normal')
+root.state('zoomed')
 root.title('AGV-HSD')
 # root.geometry('1000x600')
 root.minsize(1050, 700)
@@ -546,8 +547,8 @@ scrollbar.config(command=notificationList.yview)
 rightFrame = Frame(updatesTab, padding=10, bootstyle="dark")
 rightFrame.grid(row=0, column=1, sticky='nsew', pady=(40,0))
 
-heartbeatFrame = Frame(rightFrame, padding=20, bootstyle="secondary")
-heartbeatFrame.grid(row=1, column=0, padx=10, pady=10, sticky='ew')
+heartbeatFrame = Frame(rightFrame, padding=10, bootstyle="secondary")
+heartbeatFrame.grid(row=1, column=0, padx=5, pady=5, sticky='ew')
 
 heartbeatLabel = Label(
     heartbeatFrame,
@@ -565,8 +566,8 @@ heartbeatDataEntry.grid(row=2, column=0, padx=10, pady=(0, 5), sticky='n')
 updateHeartbeatData()
 
 #vocal data
-vocalFrame = Frame(rightFrame, padding=20, bootstyle="secondary")
-vocalFrame.grid(row=3, column=0, padx=10, pady=10, sticky='ew')
+vocalFrame = Frame(rightFrame, padding=10, bootstyle="secondary")
+vocalFrame.grid(row=3, column=0, padx=5, pady=5, sticky='ew')
 
 vocalLabel = Label(
     vocalFrame,
@@ -621,10 +622,10 @@ pause_button = Button(
     bootstyle="secondary")
 pause_button.image = pause_icon
 pause_button.grid(row=3, column=0, padx=(60, 0), pady=0, sticky='nw')
-
+an
 #waveform
-waveformFrame = Frame(rightFrame, padding=20, bootstyle="secondary")
-waveformFrame.grid(row=4, column=0, columnspan=2, padx=10, pady=10, sticky='ew')
+waveformFrame = Frame(rightFrame, padding=10, bootstyle="secondary")
+waveformFrame.grid(row=4, column=0, columnspan=2, padx=5, pady=5, sticky='ew')
 
 waveFormLabel = Label(
     waveformFrame,
@@ -708,27 +709,27 @@ def start_audio_and_waveform():
 root.after(100, start_audio_and_waveform)
 
 # Update the thermal camera feed function
-def update_thermal_camera():
-    global thermalImgTk
+# def update_thermal_camera():
+#     global thermalImgTk
 
-    # Get the thermal frame from the camera
-    thermal_frame = thermal_camera.get_image_frame_for_gui()
+#     # Get the thermal frame from the camera
+#     thermal_frame = thermal_camera.get_image_frame_for_gui()
     
-    # Convert the frame to a Tkinter-compatible format
-    thermal_img = Image.fromarray(cv2.cvtColor(thermal_frame, cv2.COLOR_BGR2RGB))
-    thermal_img = thermal_img.resize((1920, 1080))  # Resize to match the label size
-    thermalImgTk = ImageTk.PhotoImage(image=thermal_img)
+#     # Convert the frame to a Tkinter-compatible format
+#     thermal_img = Image.fromarray(cv2.cvtColor(thermal_frame, cv2.COLOR_BGR2RGB))
+#     thermal_img = thermal_img.resize((1920, 1080))  # Resize to match the label size
+#     thermalImgTk = ImageTk.PhotoImage(image=thermal_img)
 
-    # Update the label with the new image
-    ThermalCameraLabel.imgTk = thermalImgTk
-    ThermalCameraLabel.config(image=thermalImgTk)
+#     # Update the label with the new image
+#     ThermalCameraLabel.imgTk = thermalImgTk
+#     ThermalCameraLabel.config(image=thermalImgTk)
 
-    # Schedule the next update (100ms delay)
-    ThermalCameraLabel.after(100, update_thermal_camera)
+#     # Schedule the next update (100ms delay)
+#     ThermalCameraLabel.after(100, update_thermal_camera)
 
 #body temp data
-bodytempFrame = Frame(rightFrame, padding=20, bootstyle="secondary")
-bodytempFrame.grid(row=2, column=0, padx=10, pady=10, sticky='ew')
+bodytempFrame = Frame(rightFrame, padding=10, bootstyle="secondary")
+bodytempFrame.grid(row=2, column=0, padx=5, pady=5, sticky='ew')
 
 bodytempLabel = Label(
     bodytempFrame,
@@ -746,8 +747,8 @@ bodytempDataEntry.grid(row=1, column=0, padx=10, pady=(0, 5), sticky='wn')
 updateBodyTempData()
 
 #agv location data
-locationFrame = Frame(rightFrame, padding=20, bootstyle="secondary")
-locationFrame.grid(row=0, column=0, padx=10, pady=10, sticky='ew')
+locationFrame = Frame(rightFrame, padding=10, bootstyle="secondary")
+locationFrame.grid(row=0, column=0, padx=5, pady=5, sticky='ew')
 
 locationLabel = Label(
     locationFrame,
@@ -763,11 +764,23 @@ locationDataEntry = Entry(
 locationDataEntry.grid(row=1, column=0, padx=10, pady=(0, 5), sticky='n')
 
 #agv manual movement arrows
-movementFrame = Frame(rightFrame, padding=20, bootstyle="secondary")
-movementFrame.grid(row=2, column=1, rowspan=2, padx=10, pady=10, sticky='nsew')
+movementFrame = Frame(rightFrame, padding=10, bootstyle="secondary")
+movementFrame.grid(row=0, column=1, rowspan=4, padx=5, pady=5, sticky='nsew')
 
 centerFrame = Frame(movementFrame, bootstyle="secondary")
 centerFrame.grid(row=0, column=0, sticky='nsew', pady=(0,20))
+
+CAMERA_WIDTH1 = 450
+CAMERA_HEIGHT1 = 200
+movementCameraLabel = tk.Label(
+    movementFrame,
+    text='Camera',
+    background='black',
+    foreground='white',
+    width=CAMERA_WIDTH1,
+    height=CAMERA_HEIGHT1)
+movementCameraLabel.grid(row=1, column=0, sticky='nsew')
+
 
 movementLabel = Label(
     centerFrame,
@@ -809,15 +822,42 @@ stopButton.grid(row=1, column=1, padx=5, pady=5)
 stopButton.bind("<ButtonPress>", lambda event: on_press(stop))
 stopButton.bind("<ButtonRelease>", lambda event: on_release())
 
-#mechanical arm
-armFrame = Frame(rightFrame, padding=20, bootstyle="secondary")
-armFrame.grid(row=0, column=1, padx=85, pady=10, sticky='nsew')
+# #mechanical arm
+# armFrame = Frame(rightFrame, padding=20, bootstyle="secondary")
+# armFrame.grid(row=0, column=1, padx=85, pady=10, sticky='nsew')
 
-armLabel = Label(
-    armFrame,
-    text='Mechanical Arm Control',
-    font=('Segoe UI', 18, 'bold'))
-armLabel.grid(row=0, column=0, padx=10, pady=(10, 0), sticky='nsew')
+# armLabel = Label(
+#     armFrame,
+#     text='Mechanical Arm Control',
+#     font=('Segoe UI', 18, 'bold'))
+# armLabel.grid(row=0, column=0, padx=10, pady=(10, 0), sticky='nsew')
+
+# Create a grid layout for buttons
+# buttonGrid = Frame(armFrame)
+# buttonGrid.grid(row=1, column=0, pady=10)
+
+# Define button actions (replace with actual control logic or server calls)
+# def rotate_base_left():
+#     addNotification("Rotate base left")
+# def rotate_base_right():
+#     addNotification("Rotate base right")
+# def pull_back():
+#     addNotification("Arm moving away from base")
+# def push_forward():
+#     addNotification("Arm retirieting to base ")
+# def wrist_rotate():
+#     addNotification("Rotate wrist")
+# def gripper_open():
+#     addNotification("Open gripper")
+# def gripper_close():
+#     addNotification("Close gripper")
+# # Create buttons
+# Button(buttonGrid, text="Base Left", width=12, command=rotate_base_left).grid(row=0, column=0, padx=5, pady=5)
+# Button(buttonGrid, text="Base Right", width=12, command=rotate_base_right).grid(row=0, column=1, padx=5, pady=5)
+# Button(buttonGrid, text="Push Forward", width=12, command=push_forward).grid(row=1, column=0, padx=5, pady=5)
+# Button(buttonGrid, text="Pull Back", width=12, command=pull_back).grid(row=1, column=1, padx=5, pady=5)
+# Button(buttonGrid, text="Gripper Open", width=12, command=gripper_open).grid(row=4, column=0, padx=5, pady=5)
+# Button(buttonGrid, text="Gripper Close", width=12, command=gripper_close).grid(row=4, column=1, padx=5, pady=5)
 
 #bottom frame
 #battery progress bar
@@ -866,8 +906,8 @@ collectDataButton.grid(row=0, column=2, padx=(10, 0), sticky='e')
 
 #AGV REAL-TIME UPDATES TAB
 #camera frame
-CAMERA_WIDTH=450
-CAMERA_HEIGHT=300
+CAMERA_WIDTH=200
+CAMERA_HEIGHT=100
 
 cameraFrame = Frame(trackingTab, padding=10, bootstyle="secondary")
 cameraFrame.grid(row=0, column=0, padx=5, pady=5, sticky='nsew')
@@ -900,7 +940,7 @@ except Exception as e:
     print(f"Failed to connect to camera feed: {e}")
     camera_socket = None
     
-receive_camera_feed(camera_socket, cameraLabel)
+receive_camera_feed(camera_socket, cameraLabel, movementCameraLabel)
 
 #map frame
 mapFrame = Frame(trackingTab, padding=10, bootstyle="secondary")
@@ -1135,14 +1175,14 @@ trackingTab.grid_columnconfigure(0, weight=1)
 trackingTab.grid_columnconfigure(1, weight=1)
 
 
-#thermal camera frame
-ThermalCameraFrame = ttk.Frame(thermalCamTab, width=10, height=10)
-ThermalCameraFrame.grid(row=1, column=0, padx=0, pady=10, sticky='news')
-ThermalCameraLabel = ttk.Label(thermalCamTab)
-ThermalCameraLabel.grid(row=0, column=0, padx=10, pady=10)
+# # thermal camera frame
+# ThermalCameraFrame = tk.Frame(thermalCamTab, width=10, height=10)
+# ThermalCameraFrame.grid(row=1, column=0, padx=0, pady=10, sticky='news')
+# ThermalCameraLabel = ttk.Label(thermalCamTab)
+# ThermalCameraLabel.grid(row=0, column=0, padx=10, pady=10)
 
-# Start the thermal camera feed when the application runs
-update_thermal_camera()
+# # Start the thermal camera feed when the application runs
+# update_thermal_camera()
 
 def main():
     root.mainloop()
