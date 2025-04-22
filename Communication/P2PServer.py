@@ -23,9 +23,9 @@ sys.modules["MotorControl"] = motor
 spec.loader.exec_module(motor)
 
 spec1 = importlib.util.spec_from_file_location("soundDriver", sound_path)
-speaker = importlib.util.module_from_spec(spec)
+speaker = importlib.util.module_from_spec(spec1)
 sys.modules["soundDriver"] = speaker
-spec.loader.exec_module(speaker)
+spec1.loader.exec_module(speaker)
 
 # Command dispatcher
 def handle_command(command):
