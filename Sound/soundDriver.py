@@ -14,7 +14,7 @@ def play_sound():
     # Load and play the MP3 file
     pygame.mixer.music.load(project_root/"Sound/LifeCheck.mp3")
     pygame.mixer.music.play()
-
+    print("Playing sound...")
     # Keep the script running while the music plays
     while pygame.mixer.music.get_busy():
         continue
