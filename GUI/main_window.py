@@ -238,8 +238,9 @@ def updateVocalData():
 # Function to handle vocal button press
 def playVocalSound():
     try:
-        subprocess.run(['python', project_root/"Sound/soundDriver.py"], check=True)
-        addNotification("Sound played successfully","Sound played successfully")
+        # subprocess.run(['python', project_root/"Sound/soundDriver.py"], check=True)
+        # addNotification("Sound played successfully","Sound played successfully")
+        send_command_to_server("play")
     except Exception as e:
         error_message = f"Error playing sound: {str(e)}"
         addNotification(error_message,error_message)
@@ -622,7 +623,6 @@ pause_button = Button(
     bootstyle="secondary")
 pause_button.image = pause_icon
 pause_button.grid(row=3, column=0, padx=(60, 0), pady=0, sticky='nw')
-an
 #waveform
 waveformFrame = Frame(rightFrame, padding=10, bootstyle="secondary")
 waveformFrame.grid(row=4, column=0, columnspan=2, padx=5, pady=5, sticky='ew')
