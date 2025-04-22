@@ -14,12 +14,18 @@ project_root = current_file.parent.parent  # Path to Automated-Survival-Detectio
 sys.path.insert(0, str(project_root))
 # Path to MotorControl.py
 motor_path = project_root / "DeviceDrivers" / "MotorControl.py"
+sound_path = project_root / "Sound" / "soundDriver.py"
 
 # Load MotorControl module
 spec = importlib.util.spec_from_file_location("MotorControl", motor_path)
 motor = importlib.util.module_from_spec(spec)
 sys.modules["MotorControl"] = motor
 spec.loader.exec_module(motor)
+
+spec1 = importlib.util.spec_from_file_location("soundDriver", motor_path)
+speaker = importlib.util.module_from_spec(spec)
+sys.modules["soundDriver"] = speaker
+spec.loader.exec_module(speaker)
 
 # Command dispatcher
 def handle_command(command):
@@ -43,6 +49,10 @@ def handle_command(command):
     elif command == "stop":
         result = motor.stop()
         return result if result is not None else "Executed: stop"
+    
+    elif command == "play":
+        result = speaker.play_sound()
+        return result if result is not None else "Executed: play sound"
     else:
         return f"Unknown command: {command}"
 
