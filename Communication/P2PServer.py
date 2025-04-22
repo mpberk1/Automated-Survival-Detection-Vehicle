@@ -22,7 +22,7 @@ motor = importlib.util.module_from_spec(spec)
 sys.modules["MotorControl"] = motor
 spec.loader.exec_module(motor)
 
-spec1 = importlib.util.spec_from_file_location("soundDriver", motor_path)
+spec1 = importlib.util.spec_from_file_location("soundDriver", sound_path)
 speaker = importlib.util.module_from_spec(spec)
 sys.modules["soundDriver"] = speaker
 spec.loader.exec_module(speaker)
