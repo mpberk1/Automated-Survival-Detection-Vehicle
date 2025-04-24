@@ -24,6 +24,7 @@ import sounddevice as sd
 import importlib.util
 import random
 import sys
+import signal
 import subprocess
 import numpy as np
 import random
@@ -55,28 +56,56 @@ stream = None
 gpsDir =project_root / "GPS"
 sys.path.append(str(gpsDir))
 
+# Function to handle the interrupt signal
+def signal_handler(sig, frame):
+    print("\nClient interrupted by user. Exiting...")
+    if client_socket:
+        client_socket.close()
+    sys.exit(0)
+
+# Register the signal handler for KeyboardInterrupt (Ctrl+C)
+signal.signal(signal.SIGINT, signal_handler)
+
 def init_socket_connection():
     global client_socket
     try:
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client_socket.settimeout(10)  # Set a timeout for connection attempts (10 seconds)
+        print("Attempting to connect to server...")
         client_socket.connect(("10.33.228.31", 5000))
         print("Connected to server.")
+    except socket.timeout:
+        print("Connection attempt timed out. Server may not be responding.")
+    except ConnectionRefusedError:
+        print("Connection refused by server. The server might not be running or listening on the correct port.")
     except Exception as e:
         print(f"Failed to connect to server: {e}")
         client_socket = None
 
-#function to send commmands to the server:
 def send_command_to_server(command):
     global client_socket
     try:
         if client_socket:
+            print(f"Sending command: {command}")
             client_socket.sendall(command.encode('utf-8'))
+            
+            # Wait for the response with a timeout
+            client_socket.settimeout(5)  # 5 seconds timeout for receiving response
             response = client_socket.recv(1024).decode('utf-8')
             print("Server response:", response)
         else:
             print("Socket not connected.")
+    except socket.timeout:
+        print("Timeout waiting for response from the server.")
+    except KeyboardInterrupt:
+        print("\nClient interrupted by user during command sending. Exiting...")
+        if client_socket:
+            client_socket.close()
+        sys.exit(0)
     except Exception as e:
         print(f"Failed to send command: {e}")
+
+# Test connection initialization
 init_socket_connection()
 #update clock info
 def updateclock():
@@ -931,17 +960,29 @@ cameraLabel.grid(row=1, column=0, sticky='nsew')
 # camera = cv2.VideoCapture(0)
 
 # Connect to the server's camera stream
+camera_socket = None
 try:
     camera_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     camera_socket.connect(("10.33.228.31", 6000))
     print("Connected to camera feed.")
-    
+
+    # Start receiving camera feed (blocking call)
+    receive_camera_feed(camera_socket, cameraLabel, movementCameraLabel)
+
+except KeyboardInterrupt:
+    print("\nCamera client interrupted by user. Exiting...")
+
 except Exception as e:
     print(f"Failed to connect to camera feed: {e}")
-    camera_socket = None
-    
-receive_camera_feed(camera_socket, cameraLabel, movementCameraLabel)
 
+finally:
+    if camera_socket:
+        try:
+            camera_socket.shutdown(socket.SHUT_RDWR)
+        except Exception:
+            pass  # May already be closed
+        camera_socket.close()
+        print("Camera socket closed.")
 #map frame
 mapFrame = Frame(trackingTab, padding=10, bootstyle="secondary")
 mapFrame.grid(row=0, column=1, padx=5, pady=5, sticky='nsew')

@@ -12,7 +12,6 @@ import threading
 current_file = Path(__file__)  # Path to this file
 project_root = current_file.parent.parent  # Path to Automated-Survival-Detection-Vehicle
 sys.path.insert(0, str(project_root))
-# Path to MotorControl.py
 motor_path = project_root / "DeviceDrivers" / "MotorControl.py"
 sound_path = project_root / "Sound" / "soundDriver.py"
 
@@ -29,58 +28,67 @@ spec1.loader.exec_module(speaker)
 
 # Command dispatcher
 def handle_command(command):
-    #forward
     if command == "forward":
         result = motor.move_forward()
         return result if result is not None else "Executed: forward"
-    #backward
     elif command == "backward":
         result = motor.move_reverse()
         return result if result is not None else "Executed: backward"
-    #left
     elif command == "left":
         result = motor.turn_left()
         return result if result is not None else "Executed: turn left"
-    #right
     elif command == "right":
         result = motor.turn_right()
         return result if result is not None else "Executed: turn right"
-    #stop
     elif command == "stop":
         result = motor.stop()
         return result if result is not None else "Executed: stop"
-    
     elif command == "play":
         result = speaker.play_sound()
         return result if result is not None else "Executed: play sound"
     else:
         return f"Unknown command: {command}"
 
-# Server function using static IP
-def p2p_server(host="10.33.228.31", port=5000):  # <== STATIC IP HERE
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind((host, port))
-    server_socket.listen(1)
-    print(f"Server listening on {host}:{port}")
+# Handle a single client connection
+def handle_client_connection(conn, addr):
+    try:
+        print(f"Connection established with {addr}")
+        while True:
+            data = conn.recv(1024).decode('utf-8')
+            if not data:
+                break
+            print(f"Received from {addr}: {data}")
+            response = handle_command(data)
+            conn.sendall(response.encode('utf-8'))
+    except Exception as e:
+        print(f"Connection error with {addr}: {e}")
+    finally:
+        conn.close()
+        print(f"Connection with {addr} closed.")
 
-    conn, addr = server_socket.accept()
-    print(f"Connection established with {addr}")
+# Server that stays open for new connections
+def p2p_server(host="10.33.228.31", port=5000):
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server_socket.bind((host, port))
+    server_socket.listen(5)
+    print(f"[P2P Server] Listening on {host}:{port}...")
 
     while True:
-        data = conn.recv(1024).decode('utf-8')
-        if not data:
+        try:
+            conn, addr = server_socket.accept()
+            threading.Thread(target=handle_client_connection, args=(conn, addr), daemon=True).start()
+        except KeyboardInterrupt:
             break
-        print(f"Received: {data}")
+        except Exception as e:
+            print(f"[P2P Server] Accept error: {e}")
 
-        response = handle_command(data)
-        conn.sendall(response.encode('utf-8'))
-
-    conn.close()
     server_socket.close()
+    print("[P2P Server] Shutdown.")
 
+# Camera streaming server
 def camera_stream_server(host="10.33.228.31", port=6000):
-    camera = cv2.VideoCapture(0)  # Use 0 or change to camera index/path
-
+    camera = cv2.VideoCapture(0)
     if not camera.isOpened():
         print("Camera could not be opened.")
         return
@@ -98,8 +106,6 @@ def camera_stream_server(host="10.33.228.31", port=6000):
             ret, frame = camera.read()
             if not ret:
                 break
-
-            # Serialize frame
             data = pickle.dumps(frame)
             message = struct.pack("Q", len(data)) + data
             conn.sendall(message)
@@ -111,15 +117,12 @@ def camera_stream_server(host="10.33.228.31", port=6000):
         server_socket.close()
         print("[Camera Server] Closed.")
 
-
-
 if __name__ == "__main__":
     threading.Thread(target=p2p_server, daemon=True).start()
     threading.Thread(target=camera_stream_server, daemon=True).start()
-    #p2p_server()
 
     try:
         while True:
             pass
     except KeyboardInterrupt:
-        print("shutting down")
+        print("Shutting down.")
